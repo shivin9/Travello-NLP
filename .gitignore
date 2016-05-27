@@ -1,2 +1,5 @@
 *.zip
 stanford-ner/
+SGTrailsServer/
+adparsers/
+pyner/

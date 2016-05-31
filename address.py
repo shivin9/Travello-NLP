@@ -34,23 +34,18 @@ def parsepage():
 
     paragraphs = [p for p in raw.split('\n') if p]
     lens = [len(p) for p in paragraphs]
-    str1 = cleanString(raw)
-    # new = open(filename+'.tok', 'a')
-    # print 'writing in ' + filename
-    # print >> new, str1
 
-
-def cleanString(str1):
-    raw = re.sub('[^\w]', ' ', str1)
-    tok = st.tokenize(raw)
+    raww = re.sub('[^\w]', ' ', raw)
+    tok = st.tokenize(raww)
 
     tok1 = [t for t in tok if t not in stopwords.words('english') and len(t)>2 and
             not re.search(r'\d', t)]
 
-    hier_addr = get_address(str1)
+    hier_addr = get_address(raw)
+    print str(len(hier_addr)) + " addresses found!"
     print hier_addr
 
-    direct_addr = direct_address(str1)
+    direct_addr = direct_address(raw)
     print direct_addr
     str1 = ' '.join(tok1)
     return str1
@@ -66,7 +61,14 @@ def get_address(text):
     # to retrieve addresses which have phone number at the end
     for idx in range(len(paragraphs)):
         if bool(regexp.search(paragraphs[idx])) and lens[idx] <= 9:
-            possible_addresses.append([paragraphs[idx-2], paragraphs[idx-1], paragraphs[idx]])
+            poss = []
+
+            while lens[idx] <= 9:
+                poss.append(paragraphs[idx])
+                idx-=1
+
+            if len(poss) <= 15:
+                possible_addresses.append(poss[::-1])
 
     return possible_addresses
 
@@ -77,8 +79,12 @@ def direct_address(text):
 
     regexp = re.compile(r'\+[0-9][0-9]*|\([0-9]{3}\)')
 
-    possible_addresses = np.where(cmms>=2)[0]
+    paddridx = np.where(cmms>=2)[0]
+
     possible_addresses = []
+
+    for idx in paddridx:
+        possible_addresses.append(paragraphs[idx])
 
     for p in paragraphs:
         if bool(regexp.search(p)):

@@ -5,6 +5,7 @@ from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
 import multiprocessing
 import numpy as np
+import string
 import urllib
 import sys
 import os
@@ -26,6 +27,21 @@ def parsepage():
 
     url = raw_input("enter website to parse\n")
     soup = BeautifulSoup(urllib.urlopen(url).read(), 'lxml')
+
+    if 'tripadvisor' in url:
+        name = soup.findAll("title")[0].get_text().encode('ascii', 'ignore')
+        for i in range(len(name)):
+            if name[i] in string.punctuation:
+                break
+
+        name = name[0:i]
+        strt = soup.findAll("span", {"class" : 'street-address'})[0].get_text().encode('ascii', 'ignore')
+        loc = soup.findAll("span", {"class" : 'locality'})[0].get_text().encode('ascii', 'ignore')
+        count = soup.findAll("span", {"class" : 'country-name'})[0].get_text().encode('ascii', 'ignore')
+
+        print name
+        print strt, loc, count
+        return [name, strt, loc, count]
 
     for elem in soup.findAll(['script', 'style']):
         elem.extract()
@@ -54,7 +70,7 @@ def parsepage():
 def get_address(text):
     paragraphs = [p for p in text.split('\n') if p]
     lens = [len(st.tokenize(p)) for p in paragraphs]
-    regexp = re.compile(r'\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}')
+    regexp = re.compile(r'[0-9][0-9] |\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}')
 
     possible_addresses = []
 
@@ -77,7 +93,7 @@ def direct_address(text):
     lens = [len(st.tokenize(p)) for p in paragraphs]
     cmms = np.array([p.count(',') for p in paragraphs])
 
-    regexp = re.compile(r'\+[0-9][0-9]*|\([0-9]{3}\)')
+    regexp = re.compile(r'[0-9][0-9] |\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}')
 
     paddridx = np.where(cmms>=2)[0]
 
@@ -111,46 +127,46 @@ def direct_address(text):
     return surely_addresses
 
 
-def html2text(strText):
-    str1 = strText
-    int2 = str1.lower().find("<body")
-    if int2>0:
-       str1 = str1[int2:]
-    int2 = str1.lower().find("</body>")
-    if int2>0:
-       str1 = str1[:int2]
-    list1 = ['<br>',  '<tr',  '<td', '</p>', 'span>', 'li>', '</h', 'div>' ]
-    list2 = [chr(13), chr(13), chr(9), chr(13), chr(13),  chr(13), chr(13), chr(13)]
-    bolFlag1 = True
-    bolFlag2 = True
-    strReturn = ""
-    for int1 in range(len(str1)):
-      str2 = str1[int1]
-      for int2 in range(len(list1)):
-        if str1[int1:int1+len(list1[int2])].lower() == list1[int2]:
-           strReturn = strReturn + list2[int2]
-      if str1[int1:int1+7].lower() == '<script' or str1[int1:int1+9].lower() == '<noscript':
-         bolFlag1 = False
-      if str1[int1:int1+6].lower() == '<style':
-         bolFlag1 = False
-      if str1[int1:int1+7].lower() == '</style':
-         bolFlag1 = True
-      if str1[int1:int1+9].lower() == '</script>' or str1[int1:int1+11].lower() == '</noscript>':
-         bolFlag1 = True
-      if str2 == '<':
-         bolFlag2 = False
-      if bolFlag1 and bolFlag2 and (ord(str2) != 10) :
-        strReturn = strReturn + str2
-      if str2 == '>':
-         bolFlag2 = True
-      if bolFlag1 and bolFlag2:
-        strReturn = strReturn.replace(chr(32)+chr(13), chr(13))
-        strReturn = strReturn.replace(chr(9)+chr(13), chr(13))
-        strReturn = strReturn.replace(chr(13)+chr(32), chr(13))
-        strReturn = strReturn.replace(chr(13)+chr(9), chr(13))
-        strReturn = strReturn.replace(chr(13)+chr(13), chr(13))
-    strReturn = strReturn.replace(chr(13), '\n')
-    return strReturn
+# def html2text(strText):
+#     str1 = strText
+#     int2 = str1.lower().find("<body")
+#     if int2>0:
+#        str1 = str1[int2:]
+#     int2 = str1.lower().find("</body>")
+#     if int2>0:
+#        str1 = str1[:int2]
+#     list1 = ['<br>',  '<tr',  '<td', '</p>', 'span>', 'li>', '</h', 'div>' ]
+#     list2 = [chr(13), chr(13), chr(9), chr(13), chr(13),  chr(13), chr(13), chr(13)]
+#     bolFlag1 = True
+#     bolFlag2 = True
+#     strReturn = ""
+#     for int1 in range(len(str1)):
+#       str2 = str1[int1]
+#       for int2 in range(len(list1)):
+#         if str1[int1:int1+len(list1[int2])].lower() == list1[int2]:
+#            strReturn = strReturn + list2[int2]
+#       if str1[int1:int1+7].lower() == '<script' or str1[int1:int1+9].lower() == '<noscript':
+#          bolFlag1 = False
+#       if str1[int1:int1+6].lower() == '<style':
+#          bolFlag1 = False
+#       if str1[int1:int1+7].lower() == '</style':
+#          bolFlag1 = True
+#       if str1[int1:int1+9].lower() == '</script>' or str1[int1:int1+11].lower() == '</noscript>':
+#          bolFlag1 = True
+#       if str2 == '<':
+#          bolFlag2 = False
+#       if bolFlag1 and bolFlag2 and (ord(str2) != 10) :
+#         strReturn = strReturn + str2
+#       if str2 == '>':
+#          bolFlag2 = True
+#       if bolFlag1 and bolFlag2:
+#         strReturn = strReturn.replace(chr(32)+chr(13), chr(13))
+#         strReturn = strReturn.replace(chr(9)+chr(13), chr(13))
+#         strReturn = strReturn.replace(chr(13)+chr(32), chr(13))
+#         strReturn = strReturn.replace(chr(13)+chr(9), chr(13))
+#         strReturn = strReturn.replace(chr(13)+chr(13), chr(13))
+#     strReturn = strReturn.replace(chr(13), '\n')
+#     return strReturn
 
 
 if __name__ == '__main__':

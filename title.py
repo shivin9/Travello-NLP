@@ -5,6 +5,7 @@ from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
 import multiprocessing
 import numpy as np
+import string
 import urllib
 import sys
 import os
@@ -14,30 +15,60 @@ stagger = StanfordNERTagger('/home/shivin/Documents/Travello-NLP/stanford-ner/cl
 
 st = TreebankWordTokenizer()
 
-def getTitle(url, soup):
+def getTitle(url):
     out = set()
+    soup = BeautifulSoup(urllib.urlopen(url).read(), 'lxml')
 
     # separate method for ladyironchef.com
     if 'ladyironchef' in url:
-        pass
+        tags = soup.findAll('span', {"style":"font-size: x-large;"})
+        titles = []
+        for tag in tags:
+            name = tag.get_text().encode('ascii', 'ignore')
+            titles.append(name)
+        return titles
+
+    # trip advisor has only a single place_name/page
+    elif 'tripadvisor' in url:
+        page_title = soup.findAll("title")[0].get_text().encode('ascii', 'ignore')
+
+        for i in range(len(page_title)):
+            if page_title[i] in string.punctuation:
+                break
+
+        page_title = page_title[0:i]
+        return [page_title]
     # clean the retrieved text
     else:
-        text = soup.findAll(re.compile('h[0-5]|strong'))
+        # in a few rare cases the title of page can be under <Hn> inside the page also
+        header_titles = [soup.findAll('h'+str(i)) for i in range(1, 5)]
+        header_titles.append(soup.findAll('strong'))
+        # text = soup.findAll(re.compile('h[0-5]|strong'))
+
+        # to select the elements which have the maximum number of common tags
+        text = max(header_titles)
         for title in text:
-            str1 = title.get_text()
+            str1 = title.get_text().encode('ascii', 'ignore')
             str1 = str1.replace('\t', '')
             str1 = str1.replace('\n', '')
-            # if str1 in page_title:
-            #     return [str1]
             out.add(str1)
 
-    return out
+        page_title = soup.select("title")[0].get_text().encode('ascii', 'ignore')
+        for i in range(len(page_title)):
+            if page_title[i] in string.punctuation and page_title[i] != '\'':
+                break
+
+        page_title = page_title[0:i].strip()
+        print out
+        lwr = [t.lower() for t in out]
+        if page_title.lower() in lwr:
+            return [page_title]
+
+        return out
 
 if __name__ == '__main__':
     url = raw_input("enter website to parse\n")
-    soup = BeautifulSoup(urllib.urlopen(url).read(), 'lxml')
-
-    titles = getTitle(url, soup)
+    titles = getTitle(url)
     print str(len(titles)) + " titles found on page!\n"
     page_title = soup.select("title")[0].get_text()
 

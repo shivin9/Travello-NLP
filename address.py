@@ -21,27 +21,22 @@ stagger = StanfordNERTagger('/home/shivin/Documents/Travello-NLP/stanford-ner/cl
 #     pool.map(cleanfile, files)
 
 
-def parsepage():
+def parsepage(url):
     # f = open(filename, 'r')
     # raw = f.read()
 
-    url = raw_input("enter website to parse\n")
+    # url = raw_input("enter website to parse\n")
     soup = BeautifulSoup(urllib.urlopen(url).read(), 'lxml')
 
     if 'tripadvisor' in url:
-        name = soup.findAll("title")[0].get_text().encode('ascii', 'ignore')
-        for i in range(len(name)):
-            if name[i] in string.punctuation:
-                break
-
-        name = name[0:i]
         strt = soup.findAll("span", {"class" : 'street-address'})[0].get_text().encode('ascii', 'ignore')
         loc = soup.findAll("span", {"class" : 'locality'})[0].get_text().encode('ascii', 'ignore')
-        count = soup.findAll("span", {"class" : 'country-name'})[0].get_text().encode('ascii', 'ignore')
+        count = soup.findAll("span", {"class" : 'country-name'})[0].get_text().encode\
+        ('ascii', 'ignore')
 
-        print name
+        addr = strt + ', ' + loc + ', ' + count
         print strt, loc, count
-        return [name, strt, loc, count]
+        return [[[strt, loc, count]]]
 
     for elem in soup.findAll(['script', 'style']):
         elem.extract()
@@ -61,22 +56,22 @@ def parsepage():
     print str(len(hier_addr)) + " addresses found!"
     print hier_addr
 
-    direct_addr = direct_address(raw)
-    print direct_addr
-    str1 = ' '.join(tok1)
-    return str1
+    # direct_addr = direct_address(raw)
+    # print direct_addr
+    return [hier_addr]
 
 
 def get_address(text):
     paragraphs = [p for p in text.split('\n') if p]
     lens = [len(st.tokenize(p)) for p in paragraphs]
-    regexp = re.compile(r'[0-9][0-9] |\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}')
+    regexp = re.compile(r'\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}')
 
     possible_addresses = []
 
     # to retrieve addresses which have phone number at the end
     for idx in range(len(paragraphs)):
         if bool(regexp.search(paragraphs[idx])) and lens[idx] <= 9:
+            # to collect lines above the phone number
             poss = []
 
             while lens[idx] <= 9:
@@ -93,7 +88,7 @@ def direct_address(text):
     lens = [len(st.tokenize(p)) for p in paragraphs]
     cmms = np.array([p.count(',') for p in paragraphs])
 
-    regexp = re.compile(r'[0-9][0-9] |\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}')
+    regexp = re.compile(r'\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}')
 
     paddridx = np.where(cmms>=2)[0]
 
@@ -124,7 +119,7 @@ def direct_address(text):
             surely_addresses.append(addr)
 
     print str(len(surely_addresses)) + " addresses found"
-    return surely_addresses
+    return [surely_addresses]
 
 
 # def html2text(strText):

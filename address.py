@@ -42,8 +42,9 @@ def parsepage(url):
         elem.extract()
 
     raw = soup.get_text().encode('ascii', 'ignore')
-
-    paragraphs = [p for p in raw.split('\n') if p]
+    raw = raw.replace('\t', '')
+    paragraphs = raw.splitlines()
+    paragraphs = [p for p in raw.split('\n') if len(p) > 2]
     lens = [len(p) for p in paragraphs]
 
     raww = re.sub('[^\w]', ' ', raw)

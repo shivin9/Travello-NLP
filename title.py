@@ -41,12 +41,12 @@ def getTitle(url):
     # clean the retrieved text
     else:
         # in a few rare cases the title of page can be under <Hn> inside the page also
-        header_titles = [soup.findAll('h'+str(i)) for i in range(1, 5)]
-        header_titles.append(soup.findAll('strong'))
-        # text = soup.findAll(re.compile('h[0-5]|strong'))
+        # header_titles = [soup.findAll('h'+str(i)) for i in range(1, 5)]
+        # header_titles.append(soup.findAll('strong'))
+        text = soup.findAll(re.compile('h[0-5]|strong'))
 
         # to select the elements which have the maximum number of common tags
-        text = max(header_titles)
+        # text = max(header_titles)
         for title in text:
             str1 = title.get_text().encode('ascii', 'ignore')
             str1 = str1.replace('\t', '')
@@ -59,7 +59,9 @@ def getTitle(url):
                 break
 
         page_title = page_title[0:i].strip()
+
         print out
+        print page_title
         lwr = [t.lower() for t in out]
         if page_title.lower() in lwr:
             return [page_title]

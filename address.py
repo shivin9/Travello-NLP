@@ -3,7 +3,7 @@ from nltk.tag import StanfordNERTagger
 from stemming.porter2 import stem
 from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
-from streets import streets
+from street_name import streets
 import multiprocessing
 import pandas as pd
 import numpy as np
@@ -134,11 +134,12 @@ def new_address(text):
     paragraphs = [p.strip() for p in text.split('\n') if len(p.strip()) > 2]
     tokked = [st.tokenize(p) for p in paragraphs]
     lens = [len(tokked) for p in paragraphs]
+    lens = [len(st.tokenize(p)) for p in paragraphs]
+    print lens
     regexp = re.compile(r'\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}|([0-9]{3,4}[- ]){2}[0-9]{3,4}')
-
+    print paragraphs
     possible_addresses = []
     for idx in range(len(paragraphs)):
-
         # first filter the paragraphs by phone number
         if bool(regexp.search(paragraphs[idx])):
             poss = []
@@ -160,13 +161,14 @@ def new_address(text):
                 if isAddr(paragraphs[idx]):
                     temp = idx
                     while isAddr(paragraphs[temp]) or bool(regexp.search(paragraphs[temp])):
-                        poss.append(paragraphs[idx])
+                        poss.append(paragraphs[temp])
+                        temp+=1
                     # address less than 10 lines
                     if len(poss) < 10:
                         possible_addresses.append(poss[::-1])
-    print possible_addresses
     return possible_addresses
 
+# use ML techniques to fix the score increments
 def isAddr(test_addr):
     score = 0
     numterm = 0

@@ -51,14 +51,20 @@ def getTitle(url):
             str1 = title.get_text().encode('ascii', 'ignore')
             str1 = str1.replace('\t', '')
             str1 = str1.replace('\n', '')
-            out.add(str1)
+            if len(str1) > 2:
+                out.add(str1)
 
-        page_title = soup.select("title")[0].get_text().encode('ascii', 'ignore')
+        page_title = soup.select("title")[0].get_text().encode('ascii', 'ignore').strip()
+        bkpt = 0
+        # print page
         for i in range(len(page_title)):
             if page_title[i] in string.punctuation and page_title[i] != '\'':
+                print page_title[i]
+                bkpt = i
                 break
 
-        page_title = page_title[0:i].strip()
+        print bkpt
+        page_title = page_title[0:bkpt].strip()
 
         print out
         print page_title

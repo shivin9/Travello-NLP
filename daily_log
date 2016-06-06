@@ -8,3 +8,4 @@ Going to implement the address identifier which uses the UN database...
 
 6th June:-
 Implemented the address identifier using UN database but it's not working properly... fixing it today. FIXED
+Idea: Instead of manual parameters in the address identification mechanism, use machine learning to fix the optimum parameters

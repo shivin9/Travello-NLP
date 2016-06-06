@@ -22,10 +22,10 @@ lens = [len(st.tokenize(p)) for p in paragraphs]
 avg = np.average(lens)
 disc = [l>avg for l in lens]
 
-lensft = abs(dct(lens))
+lensft = abs(dct(disc))
 print paragraphs
 print lens
-plt.plot(lens)
+plt.plot(disc)
 plt.show()
 plt.plot(lensft)
 plt.show()

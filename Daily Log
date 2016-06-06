@@ -1,0 +1,10 @@
+2nd June- tried to extract a pattern in text by applying the fourier transform on length of paragraph. Can't get any clear and definite patterns. Need to use higher dimentional vectors with more features.
+
+3rd June- ideas:
+1. use classifiers like ANN for headings extraction and train on websites whose structure is well known eg. ladyironchef
+2. capture a place heading with an address in between
+
+Going to implement the address identifier which uses the UN database... 
+
+6th June:-
+Implemented the address identifier using UN database but it's not working properly... fixing it today. FIXED

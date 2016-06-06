@@ -3,4 +3,5 @@ stanford-ner/
 SGTrailsServer/
 adparsers/
 pyner/
+libraries/
 *.pyc

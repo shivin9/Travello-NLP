@@ -1,9 +1,17 @@
-from flask import Flask
-from flask import request
 from flask import render_template
 from address import parsepage
 from title import getTitle
+from flask import request
+from flask import Flask
+import pandas as pd
+
 app = Flask(__name__)
+
+data = pd.read_csv('./database/code-list.csv', dtype=str)
+countries = pd.read_csv('./database/country-codes.csv', dtype=str)
+countries = countries.set_index('CountryCode')
+addr = data.ix[:, 0:5]
+data["fname"] = ""
 
 @app.route('/')
 def index():

@@ -15,15 +15,14 @@ for elem in soup.findAll(['script', 'style']):
 
 raw = soup.get_text().encode('ascii', 'ignore')
 raw = raw.replace('\t', '')
-paragraphs = raw.splitlines()
-paragraphs = [p for p in paragraphs if len(p) > 2]
+paragraphs = [p.strip() for p in raw.split('\n') if len(p.strip()) > 2]
 lens = [len(st.tokenize(p)) for p in paragraphs]
 
 # lens = np.array([len(p) for p in paragraphs])
 avg = np.average(lens)
 disc = [l>avg for l in lens]
 
-lensft = abs(dct(disc))
+lensft = abs(dct(lens))
 print paragraphs
 print lens
 plt.plot(lens)

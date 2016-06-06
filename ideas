@@ -1,7 +1,0 @@
-first have to break the page into segments which are disjoint
-
-then retrieve pieces of text which fit the frame of address ie. short lines with many \n characters
-
-then apply NER on them to find out the address blocks
-
-use the transport address list given by UN

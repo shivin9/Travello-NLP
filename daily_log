@@ -4,8 +4,14 @@
 1. use classifiers like ANN for headings extraction and train on websites whose structure is well known eg. ladyironchef
 2. capture a place heading with an address in between
 
-Going to implement the address identifier which uses the UN database... 
+Going to implement the address identifier which uses the UN database... IMPLEMENTED
 
 6th June:-
 Implemented the address identifier using UN database but it's not working properly... fixing it today. FIXED
 Idea: Instead of manual parameters in the address identification mechanism, use machine learning to fix the optimum parameters
+
+7th June:- Planning to implement the machine learning module for learning the structure of an address based on the keywords and structure of the text.
+collected and cleaned the dataset for training
+
+8th June:- further enhancing the dataset and then going to train using differentmodels
+Need to have not only the address but also along with it random text above and below to emulate the real world data

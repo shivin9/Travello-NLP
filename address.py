@@ -3,12 +3,12 @@ from nltk.tag import StanfordNERTagger
 from stemming.porter2 import stem
 from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
-from street_name import streets
 import multiprocessing
 import pandas as pd
 import numpy as np
 import string
 import urllib
+import json
 import sys
 import os
 import re
@@ -16,29 +16,33 @@ import re
 st = TreebankWordTokenizer()
 stagger = StanfordNERTagger('/home/shivin/Documents/Travello-NLP/stanford-ner/classifiers/english.all.3class.distsim.crf.ser.gz', '/home/shivin/Documents/Travello-NLP/stanford-ner/stanford-ner.jar', encoding='utf-8')
 
-addr = pd.read_csv('./database/locs.csv', dtype=str)
-countries = pd.read_csv('./database/country-codes.csv', dtype=str)
-countries =  countries.set_index('CountryCode')['CountryName'].to_dict()
-addr = addr.fillna('')
-states = {}
-cities = {}
-countries = {}
+# addr = pd.read_csv('./database/locs.csv', dtype=str)
+# countries = pd.read_csv('./database/country-codes.csv', dtype=str)
+# countries =  countries.set_index('CountryCode')['CountryName'].to_dict()
+# addr = addr.fillna('')
+# states = {}
+# cities = {}
+# countries = {}
 
-for state in addr.State:
-    states[state] = 1
+with open('./database/streets.json', 'r') as f:
+    streets = json.load(f)
+with open('./database/states.json', 'r') as f:
+    states = json.load(f)
+with open('./database/cities.json', 'r') as f:
+    cities = json.load(f)
+with open('./database/countries.json', 'r') as f:
+    countries = json.load(f)
 
-for citi in addr.Name:
-    cities[citi] = 1
+# for state in addr.State:
+#     if state not in stopwords.words('english') and len(state)>1:
+#         states[state] = 1
 
-for count in addr.fname:
-    countries[count] = 1
+# for citi in addr.Name:
+#     if citi not in stopwords.words('english'):
+#         cities[citi] = 1
 
-# def clean():
-#     os.chdir('./data/')
-#     pool = multiprocessing.Pool()
-#     files = os.listdir('.')
-#     pool.map(cleanfile, files)
-
+# for count in addr.fname:
+#     countries[count] = 1
 
 def parsepage(url):
     soup = BeautifulSoup(urllib.urlopen(url).read(), 'lxml')
@@ -135,11 +139,12 @@ def new_address(text):
     tokked = [st.tokenize(p) for p in paragraphs]
     lens = [len(tokked) for p in paragraphs]
     lens = [len(st.tokenize(p)) for p in paragraphs]
+    regexp = re.compile(r'\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}|([0-9]{3,4}[- ]){2}[0-9]{3,4}|[0-9]{10}')
+    # print paragraphs
     print lens
-    regexp = re.compile(r'\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}|([0-9]{3,4}[- ]){2}[0-9]{3,4}')
-    print paragraphs
     possible_addresses = []
-    for idx in range(len(paragraphs)):
+    idx = 0
+    while idx < len(paragraphs):
         # first filter the paragraphs by phone number
         if bool(regexp.search(paragraphs[idx])):
             poss = []
@@ -147,12 +152,13 @@ def new_address(text):
             temp = idx-1
             print paragraphs[idx]
             # go back till we are seeing an address
-            while isAddr(paragraphs[temp]):
+            while isAddr(paragraphs[temp]) and lens[temp] < 10:
                 poss.append(paragraphs[temp])
                 temp-=1
 
             if len(poss) <= 15:
                 possible_addresses.append(poss[::-1])
+                idx+=1
 
         else:
             # some random number for max. length of an address
@@ -161,11 +167,17 @@ def new_address(text):
                 if isAddr(paragraphs[idx]):
                     temp = idx
                     while isAddr(paragraphs[temp]) or bool(regexp.search(paragraphs[temp])):
+                        if lens[temp] >= 10:
+                            break
                         poss.append(paragraphs[temp])
                         temp+=1
+                        if temp >= len(paragraphs):
+                            break
                     # address less than 10 lines
                     if len(poss) < 10:
-                        possible_addresses.append(poss[::-1])
+                        possible_addresses.append(poss)
+                        idx = temp
+        idx+=1
     return possible_addresses
 
 # use ML techniques to fix the score increments
@@ -174,6 +186,7 @@ def isAddr(test_addr):
     numterm = 0
     for terms in st.tokenize(test_addr):
         numterm+=1
+        # terms = terms.lower()
         if terms in states:
             print "state " + terms + " found!"
             score+=1
@@ -187,49 +200,6 @@ def isAddr(test_addr):
             print "country " + terms + " found!"
             score+=1
     return float(score)/numterm > 0.4
-
-
-# def html2text(strText):
-#     str1 = strText
-#     int2 = str1.lower().find("<body")
-#     if int2>0:
-#        str1 = str1[int2:]
-#     int2 = str1.lower().find("</body>")
-#     if int2>0:
-#        str1 = str1[:int2]
-#     list1 = ['<br>',  '<tr',  '<td', '</p>', 'span>', 'li>', '</h', 'div>' ]
-#     list2 = [chr(13), chr(13), chr(9), chr(13), chr(13),  chr(13), chr(13), chr(13)]
-#     bolFlag1 = True
-#     bolFlag2 = True
-#     strReturn = ""
-#     for int1 in range(len(str1)):
-#       str2 = str1[int1]
-#       for int2 in range(len(list1)):
-#         if str1[int1:int1+len(list1[int2])].lower() == list1[int2]:
-#            strReturn = strReturn + list2[int2]
-#       if str1[int1:int1+7].lower() == '<script' or str1[int1:int1+9].lower() == '<noscript':
-#          bolFlag1 = False
-#       if str1[int1:int1+6].lower() == '<style':
-#          bolFlag1 = False
-#       if str1[int1:int1+7].lower() == '</style':
-#          bolFlag1 = True
-#       if str1[int1:int1+9].lower() == '</script>' or str1[int1:int1+11].lower() == '</noscript>':
-#          bolFlag1 = True
-#       if str2 == '<':
-#          bolFlag2 = False
-#       if bolFlag1 and bolFlag2 and (ord(str2) != 10) :
-#         strReturn = strReturn + str2
-#       if str2 == '>':
-#          bolFlag2 = True
-#       if bolFlag1 and bolFlag2:
-#         strReturn = strReturn.replace(chr(32)+chr(13), chr(13))
-#         strReturn = strReturn.replace(chr(9)+chr(13), chr(13))
-#         strReturn = strReturn.replace(chr(13)+chr(32), chr(13))
-#         strReturn = strReturn.replace(chr(13)+chr(9), chr(13))
-#         strReturn = strReturn.replace(chr(13)+chr(13), chr(13))
-#     strReturn = strReturn.replace(chr(13), '\n')
-#     return strReturn
-
 
 if __name__ == '__main__':
     parsepage()

@@ -5,3 +5,4 @@ adparsers/
 pyner/
 libraries/
 *.pyc
+images/

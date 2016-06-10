@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup
 import multiprocessing
 import pandas as pd
 import numpy as np
+import urllib2
 import string
-import urllib
 import json
 import sys
 import os
@@ -32,7 +32,6 @@ with open('./database/cities.json', 'r') as f:
     cities = json.load(f)
 with open('./database/countries.json', 'r') as f:
     countries = json.load(f)
-
 # for state in addr.State:
 #     if state not in stopwords.words('english') and len(state)>1:
 #         states[state] = 1
@@ -45,7 +44,11 @@ with open('./database/countries.json', 'r') as f:
 #     countries[count] = 1
 
 def parsepage(url):
-    soup = BeautifulSoup(urllib.urlopen(url).read(), 'lxml')
+    opener = urllib2.build_opener()
+    opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
+    response = opener.open(url)
+    page = response.read()
+    soup = BeautifulSoup(page, 'lxml')
 
     if 'tripadvisor' in url:
         strt = soup.findAll("span", {"class" : 'street-address'})[0].get_text().encode('ascii', 'ignore')

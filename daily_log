@@ -15,3 +15,7 @@ collected and cleaned the dataset for training
 
 8th June:- further enhancing the dataset and then going to train using differentmodels
 Need to have not only the address but also along with it random text above and below to emulate the real world data
+
+9th June:- researching techniques for image extraction... can use pinterest attributes in images
+
+10th June:- written script for image extraction... images are extracted based on size and attached to place names ie. headers using document similarity methods

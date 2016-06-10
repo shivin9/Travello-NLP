@@ -17,7 +17,11 @@ st = TreebankWordTokenizer()
 
 def getTitle(url):
     out = set()
-    soup = BeautifulSoup(urllib.urlopen(url).read(), 'lxml')
+    opener = urllib2.build_opener()
+    opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
+    response = opener.open(url)
+    page = response.read()
+    soup = BeautifulSoup(page, 'lxml')
 
     # separate method for ladyironchef.com
     if 'ladyironchef' in url:

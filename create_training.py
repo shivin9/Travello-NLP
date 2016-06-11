@@ -44,12 +44,11 @@ def generate_data():
         addrs = json.load(addrs)
 
     addresses_train = []
-
+    print "generating hierarchical addresses..."
     for i in range(len(addrs)):
         temp = []
         y = []
         cnt = 0
-        print i
         rnum = random.random()
         gnum1 = -1
         # for selecting the number of garbage texts above and below the address
@@ -97,6 +96,7 @@ def generate_data():
 def oneliners():
     with open('./database/us_rest1.json') as rests:
         rests = json.load(rests)
+    print "generating one line addresses..."
 
     randlist = random.sample(range(1, len(rests['data'])), 6000)
     one_line_addrs = []

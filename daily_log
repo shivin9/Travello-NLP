@@ -19,3 +19,4 @@ Need to have not only the address but also along with it random text above and b
 9th June:- researching techniques for image extraction... can use pinterest attributes in images
 
 10th June:- written script for image extraction... images are extracted based on size and attached to place names ie. headers using document similarity methods
+can use library seqlearn... which is especially built for these tasks

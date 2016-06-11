@@ -50,15 +50,15 @@ def parsepage(url):
     page = response.read()
     soup = BeautifulSoup(page, 'lxml')
 
-    if 'tripadvisor' in url:
-        strt = soup.findAll("span", {"class" : 'street-address'})[0].get_text().encode('ascii', 'ignore')
-        loc = soup.findAll("span", {"class" : 'locality'})[0].get_text().encode('ascii', 'ignore')
-        count = soup.findAll("span", {"class" : 'country-name'})[0].get_text().encode\
-        ('ascii', 'ignore')
+    # if 'tripadvisor' in url:
+    #     strt = soup.findAll("span", {"class" : 'street-address'})[0].get_text().encode('ascii', 'ignore')
+    #     loc = soup.findAll("span", {"class" : 'locality'})[0].get_text().encode('ascii', 'ignore')
+    #     count = soup.findAll("span", {"class" : 'country-name'})[0].get_text().encode\
+    #     ('ascii', 'ignore')
 
-        addr = strt + ', ' + loc + ', ' + count
-        print strt, loc, count
-        return [[[strt, loc, count]]]
+    #     addr = strt + ', ' + loc + ', ' + count
+    #     print strt, loc, count
+    #     return [[[strt, loc, count]]]
 
     for elem in soup.findAll(['script', 'style']):
         elem.extract()
@@ -75,9 +75,8 @@ def parsepage(url):
             not re.search(r'\d', t)]
 
     hier_addr = new_address(raw)
-    print str(len(hier_addr)) + " addresses found!"
-    print hier_addr
-
+    # print str(len(hier_addr)) + " addresses found!"
+    # print hier_addr
     # direct_addr = direct_address(raw)
     # print direct_addr
     return [hier_addr]

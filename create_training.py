@@ -32,7 +32,6 @@ renum = re.compile(r'[0-9]+')
 
 garbage = garbage.split('\n')
 garbage = [g for g in garbage if g!='']
-print len(garbage)
 labels1 = []
 labels2 = []
 summ = 0
@@ -77,21 +76,25 @@ def generate_data():
         labels1.append(y)
         addresses_train.append(temp)
 
-    # buffer address...
-    # addresses_train.append([""])
     data_vec = []
 
     for i in range(len(addresses_train)):
-        data_vec.append(getdet(addresses_train[i]))
+        for para in addresses_train[i]:
+            data_vec.append(getvec([para]))
+
+    newy = []
+    for file in labels1:
+        for para in file:
+            newy.append(para)
 
 
     with open("./database/train1", "w") as f:
         print >> f, addresses_train
 
-    with open("./database/labels1", "w") as f1:
-        print >> f1, labels1
+    with open("./database/labels1.py", "w") as f1:
+        print >> f1, newy
 
-    with open("./database/datavec1", "w") as f2:
+    with open("./database/datavec1.py", "w") as f2:
         print >> f2, data_vec
 
 def oneliners():
@@ -141,23 +144,30 @@ def oneliners():
     data_vec = []
 
     for i in range(len(one_line_addrs)):
-        data_vec.append(getdet(one_line_addrs[i]))
+        for para in one_line_addrs[i]:
+            data_vec.append(getvec([para]))
+
+    newy = []
+    for file in labels2:
+        for para in file:
+            newy.append(para)
 
     with open("./database/train2", "w") as f:
         print >> f, one_line_addrs
 
     with open("./database/labels2", "w") as f1:
-        print >> f1, labels2
+        print >> f1, newy
 
     with open("./database/datavec2", "w") as f2:
         print >> f2, data_vec
 
-
+# changed to remove sliding window approach
 def getdet(data):
-    data.append("")
+    # data is a whole file
+    # data[i] is a paragraph
     feature_vec = []
-    for i in range(len(data) - 1):
-        feature_vec.append(getvec([data[i], data[i+1]]))
+    for i in range(len(data)):
+        feature_vec.append(getvec([data[i]]))
     return feature_vec
 
 def getvec(lines):
@@ -170,8 +180,7 @@ def getvec(lines):
             length of paragraph(7)
             result of prev. state if any
     '''
-    vec = [0]*16
-    par = 0
+    vec = [0]*8
     for line in lines:
         phnum = len(reph.findall(line))
         nums = len(renum.findall(line))
@@ -181,24 +190,23 @@ def getvec(lines):
             numterm+=1
             # terms = terms.lower()
             if terms.lower() in streets:
-                vec[0 + 8*par] += 1
-                vec[4 + 8*par] += streets[terms.lower()]/float(summ)
+                vec[0] += 1
+                vec[4] += streets[terms.lower()]/float(summ)
 
             if terms in states:
-                vec[1 + 8*par] += 1
+                vec[1] += 1
 
             if terms in cities:
-                vec[2 + 8*par] += 1
+                vec[2] += 1
 
             if terms in countries:
-                vec[3 + 8*par] += 1
+                vec[3] += 1
 
-            vec[5 + 8*par] = phnum
-            vec[6 + 8*par] = nums
-            vec[7 + 8*par] = numterm
-            par = 1
+            vec[5] = phnum
+            vec[6] = nums
+            vec[7] = numterm
 
     return vec
 
-generate_data()
+# generate_data()
 oneliners()

@@ -204,4 +204,5 @@ def isAddr(test_addr):
     return float(score)/numterm > 0.4
 
 if __name__ == '__main__':
-    parsepage()
+    url = raw_input("enter website to parse\n")
+    parsepage(url)

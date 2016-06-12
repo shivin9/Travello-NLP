@@ -55,7 +55,8 @@ def generate_data():
         while gnum1 < 0 or gnum2 < 0:
             gnum1 = int(random.gauss(10, 5))
             gnum2 = int(random.gauss(10, 5))
-
+        # gnum1 = 0
+        # gnum2 = 0
         temp += random.sample(garbage, gnum1)
         y += [0]*gnum1
 
@@ -173,12 +174,11 @@ def getdet(data):
 def getvec(lines):
     '''
         features:
-            number of streets(0), cities(1), states(2), countries(3) of current and next if present
+            number of streets(0), cities(1), states(2), countries(3) of current
             sum of weights of the streets(4)
             has phone number?(5)
             number of numbers(6)
             length of paragraph(7)
-            result of prev. state if any
     '''
     vec = [0]*8
     for line in lines:
@@ -209,4 +209,4 @@ def getvec(lines):
     return vec
 
 # generate_data()
-oneliners()
+# oneliners()

@@ -1,28 +1,49 @@
 from nltk.tokenize import TreebankWordTokenizer
 from nltk.tag import StanfordNERTagger
+from sklearn.cluster import KMeans
 from stemming.porter2 import stem
 from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
+import theano.tensor as T
 import multiprocessing
-import pandas as pd
 import numpy as np
+import lasagne
 import urllib2
 import string
+import theano
 import json
 import sys
 import os
 import re
+sys.path.insert(0, './database/')
+from create_training import getvec
+
+
+
+# GLOBAL PARAMETERS
+SEQ_LENGTH = 1
+
+# Number of units in the two hidden (LSTM) layers
+N_HIDDEN = 512
+
+# Optimization learning rate
+LEARNING_RATE = .01
+
+# All gradients above this will be clipped
+GRAD_CLIP = 100
+
+# How often should we check the output?
+PRINT_FREQ = 5
+
+# Number of epochs to train the net
+NUM_EPOCHS = 50
+
+# Batch Size
+BATCH_SIZE = 256
+
 
 st = TreebankWordTokenizer()
 stagger = StanfordNERTagger('/home/shivin/Documents/Travello-NLP/stanford-ner/classifiers/english.all.3class.distsim.crf.ser.gz', '/home/shivin/Documents/Travello-NLP/stanford-ner/stanford-ner.jar', encoding='utf-8')
-
-# addr = pd.read_csv('./database/locs.csv', dtype=str)
-# countries = pd.read_csv('./database/country-codes.csv', dtype=str)
-# countries =  countries.set_index('CountryCode')['CountryName'].to_dict()
-# addr = addr.fillna('')
-# states = {}
-# cities = {}
-# countries = {}
 
 with open('./database/streets.json', 'r') as f:
     streets = json.load(f)
@@ -32,16 +53,6 @@ with open('./database/cities.json', 'r') as f:
     cities = json.load(f)
 with open('./database/countries.json', 'r') as f:
     countries = json.load(f)
-# for state in addr.State:
-#     if state not in stopwords.words('english') and len(state)>1:
-#         states[state] = 1
-
-# for citi in addr.Name:
-#     if citi not in stopwords.words('english'):
-#         cities[citi] = 1
-
-# for count in addr.fname:
-#     countries[count] = 1
 
 def parsepage(url):
     opener = urllib2.build_opener()
@@ -49,39 +60,30 @@ def parsepage(url):
     response = opener.open(url)
     page = response.read()
     soup = BeautifulSoup(page, 'lxml')
+    if 'tripadvisor' in url:
+        strt = soup.findAll("span", {"class" : 'street-address'})[0].get_text().encode('ascii', 'ignore')
+        loc = soup.findAll("span", {"class" : 'locality'})[0].get_text().encode('ascii', 'ignore')
+        count = soup.findAll("span", {"class" : 'country-name'})[0].get_text().encode\
+        ('ascii', 'ignore')
 
-    # if 'tripadvisor' in url:
-    #     strt = soup.findAll("span", {"class" : 'street-address'})[0].get_text().encode('ascii', 'ignore')
-    #     loc = soup.findAll("span", {"class" : 'locality'})[0].get_text().encode('ascii', 'ignore')
-    #     count = soup.findAll("span", {"class" : 'country-name'})[0].get_text().encode\
-    #     ('ascii', 'ignore')
-
-    #     addr = strt + ', ' + loc + ', ' + count
-    #     print strt, loc, count
-    #     return [[[strt, loc, count]]]
+        addr = strt + ', ' + loc + ', ' + count
+        print strt, loc, count
+        return [[[strt, loc, count]]]
 
     for elem in soup.findAll(['script', 'style']):
         elem.extract()
+    predictrnn(url)
 
-    raw = soup.get_text().encode('ascii', 'ignore')
-    raw = raw.replace('\t', '')
-    # paragraphs = raw.splitlines()
-    # paragraphs = [p.strip() for p in raw.split('\n') if len(p) > 2]
-
-    raww = re.sub('[^\w]', ' ', raw)
-    tok = st.tokenize(raww)
-
-    tok1 = [t for t in tok if t not in stopwords.words('english') and len(t)>2 and
-            not re.search(r'\d', t)]
-
-    hier_addr = new_address(raw)
+    # raw = soup.get_text().encode('ascii', 'ignore')
+    # raw = raw.replace('\t', '')
+    # hier_addr = new_address(raw)
     # print str(len(hier_addr)) + " addresses found!"
     # print hier_addr
-    # direct_addr = direct_address(raw)
-    # print direct_addr
-    return [hier_addr]
+    # # direct_addr = direct_address(raw)
+    # # print direct_addr
+    # return [hier_addr]
 
-
+# hierarchical addresses
 def get_address(text):
     paragraphs = [p.strip() for p in text.split('\n') if len(p.strip()) > 2]
     lens = [len(st.tokenize(p)) for p in paragraphs]
@@ -105,6 +107,7 @@ def get_address(text):
 
     return possible_addresses
 
+# one line addresses
 def direct_address(text):
     paragraphs = [p.strip() for p in text.split('\n') if len(p.strip()) > 2]
     lens = [len(st.tokenize(p)) for p in paragraphs]
@@ -190,19 +193,95 @@ def isAddr(test_addr):
         numterm+=1
         # terms = terms.lower()
         if terms in states:
-            print "state " + terms + " found!"
+            # print "state " + terms + " found!"
             score+=1
         if terms.lower() in streets:
-            print "street " + terms + " found!"
+            # print "street " + terms + " found!"
             score+=3
         if terms in cities:
-            print "city " + terms + " found!"
+            # print "city " + terms + " found!"
             score+=1
         if terms in countries:
-            print "country " + terms + " found!"
+            # print "country " + terms + " found!"
             score+=1
     return float(score)/numterm > 0.4
 
+def parseurl(url):
+    opener = urllib2.build_opener()
+    opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
+    response = opener.open(url)
+    page = response.read()
+    soup = BeautifulSoup(page, 'lxml')
+    for elem in soup.findAll(['script', 'style']):
+            elem.extract()
+    raw = soup.get_text().encode('ascii', 'ignore')
+    paragraphs = [p.strip() for p in raw.split('\n') if len(p.strip()) > 2]
+    return paragraphs
+
+
+def getaddr(url, pred):
+    paras = parseurl(url)
+    data = np.zeros((BATCH_SIZE, SEQ_LENGTH, 8))
+    for bn in range(BATCH_SIZE):
+        for s in range(SEQ_LENGTH):
+            if bn*SEQ_LENGTH + s >= len(paras):
+                break
+            data[bn, s, :] = np.array(getvec([paras[bn*SEQ_LENGTH+s]]))
+    res = pred(data)
+    res = res.flatten()
+    for i in range(len(paras)):
+        print (paras[i], res[i])
+    return res, paras
+
+
+def predictrnn(url):
+    l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, 8))
+
+    l_forward = lasagne.layers.RecurrentLayer(
+            l_in, N_HIDDEN, grad_clipping=GRAD_CLIP,
+            W_in_to_hid=lasagne.init.HeUniform(),
+            W_hid_to_hid=lasagne.init.HeUniform(),
+            nonlinearity=lasagne.nonlinearities.tanh, only_return_final=True)
+
+    l_backward = lasagne.layers.RecurrentLayer(
+            l_in, N_HIDDEN, grad_clipping=GRAD_CLIP,
+            W_in_to_hid=lasagne.init.HeUniform(),
+            W_hid_to_hid=lasagne.init.HeUniform(),
+            nonlinearity=lasagne.nonlinearities.tanh,
+            only_return_final=True, backwards=True)
+
+    l_concat = lasagne.layers.ConcatLayer([l_forward, l_backward])
+    l_dense = lasagne.layers.DenseLayer(
+        l_concat, num_units=SEQ_LENGTH, nonlinearity=lasagne.nonlinearities.tanh)
+
+    l_out = lasagne.layers.DenseLayer(l_concat, num_units=SEQ_LENGTH, nonlinearity=lasagne.nonlinearities.tanh)
+
+    target_values = T.dmatrix('target_output')
+    network_output = lasagne.layers.get_output(l_out)
+    all_param_values = np.load('./models/rnnmodel-old.npy')
+
+    all_params = lasagne.layers.get_all_params(l_out)
+    for p, v in zip(all_params, all_param_values):
+        p.set_value(v)
+
+    pred = theano.function([l_in.input_var],network_output,allow_input_downcast=True)
+    res, parag = getaddr(url, pred)
+    res = res.reshape(-1,1)
+    est = KMeans(n_clusters = 3)
+    est.fit(res)
+    labels = est.labels_
+    dict = {}
+    dict[0] = []
+    dict[1] = []
+    dict[2] = []
+    print len(labels), len(parag)
+    for i in range(len(parag)):
+        dict[labels[i]].append(parag[i])
+
+    print dict
+
+
 if __name__ == '__main__':
-    url = raw_input("enter website to parse\n")
-    parsepage(url)
+    while 1:
+        url = raw_input("enter website to parse\n")
+        parsepage(url)

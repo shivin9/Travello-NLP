@@ -19,3 +19,7 @@ Need to have not only the address but also along with it random text above and b
 9th June:- researching techniques for image extraction... can use pinterest attributes in images
 
 10th June:- written script for image extraction... images are extracted based on size and attached to place names ie. headers using document similarity methods
+
+11th June:- Playing around with Lasagne to make sense out of it
+
+12th June:- Managed to train a RNN and an LSTM-NN which are giving reasonable accuracy... Need to cluster the terms now based on probability distributions to extract the final addresses

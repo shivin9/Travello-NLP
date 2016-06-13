@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import multiprocessing
 import numpy as np
 import string
-import urllib
+import urllib2
 import sys
 import os
 import re

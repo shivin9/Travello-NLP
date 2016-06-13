@@ -26,12 +26,19 @@ with open('./database/countries.json', 'r') as f:
     countries = json.load(f)
 with open('./database/garbage', 'r') as f:
     garbage = f.read()
+with open('./database/cafes', 'r') as f:
+    cafes = f.read()
+
 
 reph = re.compile(r'\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}|([0-9]{3,4}[- ]){2}[0-9]{3,4}|[0-9]{10}')
 renum = re.compile(r'[0-9]+')
 
 garbage = garbage.split('\n')
-garbage = [g for g in garbage if g!='']
+garbage = [g for g in garbage if g != '']
+
+cafes = cafes.split('\n')
+cafes = [c for c in cafes if c != '']
+
 labels1 = []
 labels2 = []
 summ = 0
@@ -60,6 +67,12 @@ def generate_data():
         temp += random.sample(garbage, gnum1)
         y += [0]*gnum1
 
+        # probabilistically append the restaurant name
+        if rnum > 0.6:
+            temp += random.sample(cafes, 1)
+            y += [1]
+            cnt += 1
+
         # necessarily append the address1
         temp.append(addrs[i]['address']['address1'].encode('ascii', 'ignore'))
         cnt += 1
@@ -68,7 +81,7 @@ def generate_data():
             cnt += 1
 
             # dont put phone numbers in all cases as then it will learn that only
-            if rnum > 0.4 and 'phone' in addrs[i]:
+            if rnum > 0.6 and 'phone' in addrs[i]:
                 temp.append(addrs[i]['phone'].encode('ascii', 'ignore'))
                 cnt += 1
         y += [1]*cnt
@@ -110,6 +123,7 @@ def oneliners():
     # for selecting the number of garbage texts above and below the address
 
     for idx in randlist:
+        print idx
         str1 = ""
         temp = []
         # print idx
@@ -120,9 +134,15 @@ def oneliners():
         while gnum1<=0 or gnum2 <= 0:
             gnum1 = int(random.gauss(10, 5))
             gnum2 = int(random.gauss(10, 5))
+
+        if rnum > 0.6:
+            temp += random.sample(cafes, 1)
+            y1 += [1]
+
         temp += random.sample(garbage, gnum1)
         y1 += [0]*gnum1
         ordd = order
+
         if rnum < 0.5:
             ordd = order[:-1]
         if rnum < 0.4:
@@ -156,10 +176,10 @@ def oneliners():
     with open("./database/train2", "w") as f:
         print >> f, one_line_addrs
 
-    with open("./database/labels2", "w") as f1:
+    with open("./database/labels2.py", "w") as f1:
         print >> f1, newy
 
-    with open("./database/datavec2", "w") as f2:
+    with open("./database/datavec2.py", "w") as f2:
         print >> f2, data_vec
 
 # changed to remove sliding window approach
@@ -194,6 +214,8 @@ def getvec(lines):
                 vec[4] += streets[terms.lower()]/float(summ)
 
             if terms in states:
+                # state names are biased towards US and Australia addresses
+                # therefore we don't add their weights
                 vec[1] += 1
 
             if terms in cities:
@@ -208,5 +230,8 @@ def getvec(lines):
 
     return vec
 
-# generate_data()
-# oneliners()
+
+
+if __name__ == '__main__':
+    generate_data()
+    oneliners()

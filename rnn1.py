@@ -25,10 +25,10 @@ from labels1 import y1
 from labels2 import y2
 from create_training import getvec
 
-SEQ_LENGTH = 1
+SEQ_LENGTH = 4
 
 # Number of units in the two hidden (LSTM) layers
-N_HIDDEN = 512
+N_HIDDEN = 64
 
 # Optimization learning rate
 LEARNING_RATE = .01
@@ -75,7 +75,6 @@ cell_parameters = lasagne.layers.recurrent.Gate(
     # By convention, the cell nonlinearity is tanh in an LSTM.
     nonlinearity=lasagne.nonlinearities.tanh)
 
-N_HIDDEN = 10
 l_lstm = lasagne.layers.recurrent.LSTMLayer(
     l_in, N_HIDDEN,
     # Here, we supply the gate parameters for each gate
@@ -88,13 +87,17 @@ l_lstm_back = lasagne.layers.recurrent.LSTMLayer(
     l_in, N_HIDDEN, ingate=gate_parameters, forgetgate=gate_parameters,
     cell=cell_parameters, outgate=gate_parameters,
     learn_init=True, grad_clipping=100., backwards=True)
+
 # We'll combine the forward and backward layer output by summing.
 # Merge layers take in lists of layers to merge as input.
 l_sum = lasagne.layers.ElemwiseSumLayer([l_lstm, l_lstm_back])
 
 l_reshape = lasagne.layers.ReshapeLayer(l_sum, (-1, N_HIDDEN))
+
 l_dense = lasagne.layers.DenseLayer(
-    l_reshape, num_units=SEQ_LENGTH, nonlinearity=lasagne.nonlinearities.tanh)
+    l_reshape, num_units=1, nonlinearity=lasagne.nonlinearities.tanh)
+
+
 l_out = lasagne.layers.ReshapeLayer(l_dense, (BATCH_SIZE, SEQ_LENGTH))
 
 target_values = T.dmatrix('target_output')
@@ -127,7 +130,7 @@ xval, yval = gen_data(0, out, ans)
 
 print "training the network..."
 p = 0
-for it in xrange(300):
+for it in xrange(data_size * NUM_EPOCHS/ BATCH_SIZE):
     avg_cost = 0
     for _ in range(PRINT_FREQ):
         x1, y11 = gen_data(p, X1, y1)
@@ -138,7 +141,7 @@ for it in xrange(300):
         avg_cost += train(x1, y11)
         avg_cost += train(x2, y22)
     valerr = compute_cost(xval,yval)
-    if valerr < 0.01 and it > 50:
+    if valerr < 0.005 and it > 50:
         break
     print ("Epoch {} validation cost = {}".format(it*1.0*PRINT_FREQ/data_size*BATCH_SIZE, valerr))
 
@@ -156,26 +159,23 @@ def parsepage(url):
 
 
 def getaddr(url):
-    paras = parsepage(url)
-    data = np.zeros((BATCH_SIZE, SEQ_LENGTH, 8))
-    for bn in range(BATCH_SIZE):
-        for s in range(SEQ_LENGTH):
-            if bn*SEQ_LENGTH + s >= len(paras):
-                break
-            data[bn, s, :] = np.array(getvec([paras[bn*SEQ_LENGTH+s]]))
-    res = pred(data)
-    res = res.flatten()
-    idx = []
-    for i in range(len(res)):
-        if res[i] >= 0.98:
-            idx.append(i)
+        paras = parsepage(url)
+        data = np.zeros((BATCH_SIZE, SEQ_LENGTH, 8))
+        for bn in range(BATCH_SIZE):
+            for s in range(SEQ_LENGTH):
+                if bn*SEQ_LENGTH + s >= len(paras):
+                    break
+                data[bn, s, :] = np.array(getvec([paras[bn*SEQ_LENGTH+s]]))
+        res = pred(data)
+        res = res.flatten()
+        for i in range(len(paras)):
+            print (paras[i], res[i])
+        return data
 
-    for i in range(len(res)):
-        print (paras[i], res[i])
-    return data, paras
+all_param_values = [p.get_value() for p in all_params]
+np.save("lstmodel", all_param_values)
 
-with open("saved", "w") as f:
-    print >> f, all_params
+
 while 1:
     url = raw_input("enter website to parse\n")
     getaddr(url)

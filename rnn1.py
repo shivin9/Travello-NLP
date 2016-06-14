@@ -62,6 +62,7 @@ def gen_data(p, X, y, batch_size=BATCH_SIZE):
     return x, np.array(yout)
 
 print "creating layers"
+
 l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, 8))
 
 gate_parameters = lasagne.layers.recurrent.Gate(
@@ -108,6 +109,7 @@ cost = T.mean((network_output - target_values)**2)
 
 all_params = lasagne.layers.get_all_params(l_out)
 updates = lasagne.updates.adagrad(cost, all_params, LEARNING_RATE)
+
 print('compiling the network...')
 train = theano.function([l_in.input_var, target_values], cost, updates=updates, allow_input_downcast=True)
 compute_cost = theano.function([l_in.input_var, target_values], cost, allow_input_downcast=True)
@@ -130,17 +132,24 @@ xval, yval = gen_data(0, out, ans)
 
 print "training the network..."
 p = 0
+flag = 0
 for it in xrange(data_size * NUM_EPOCHS/ BATCH_SIZE):
     avg_cost = 0
     for _ in range(PRINT_FREQ):
-        x1, y11 = gen_data(p, X1, y1)
-        x2, y22 = gen_data(p, X2, y2)
+        try:
+            x1, y11 = gen_data(p, X1, y1)
+            x2, y22 = gen_data(p, X2, y2)
+        except:
+            flag = 1
+            break
         p+=BATCH_SIZE*SEQ_LENGTH/NUM_EPOCHS
         if p+BATCH_SIZE*SEQ_LENGTH>=data_size:
             break
         avg_cost += train(x1, y11)
         avg_cost += train(x2, y22)
     valerr = compute_cost(xval,yval)
+    if flag == 1:
+        break
     if valerr < 0.005 and it > 50:
         break
     print ("Epoch {} validation cost = {}".format(it*1.0*PRINT_FREQ/data_size*BATCH_SIZE, valerr))

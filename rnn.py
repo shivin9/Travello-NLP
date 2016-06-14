@@ -62,6 +62,7 @@ def gen_data(p, X, y, batch_size=BATCH_SIZE):
     return x, np.array(yout)
 
 print "creating layers"
+
 l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, 8))
 
 l_forward = lasagne.layers.RecurrentLayer(

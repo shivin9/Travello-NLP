@@ -15,14 +15,8 @@ stagger = StanfordNERTagger('/home/shivin/Documents/Travello-NLP/stanford-ner/cl
 
 st = TreebankWordTokenizer()
 
-def getTitle(url):
+def getTitle(soup):
     out = set()
-    opener = urllib2.build_opener()
-    opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
-    response = opener.open(url)
-    page = response.read()
-    soup = BeautifulSoup(page, 'lxml')
-
     # separate method for ladyironchef.com
     if 'ladyironchef' in url:
         tags = soup.findAll('span', {"style":"font-size: x-large;"})
@@ -80,8 +74,14 @@ def getTitle(url):
 
 if __name__ == '__main__':
     url = raw_input("enter website to parse\n")
-    titles = getTitle(url)
+    opener = urllib2.build_opener()
+    opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
+    response = opener.open(url)
+    page = response.read()
+    soup = BeautifulSoup(page, 'lxml')
+    titles = getTitle(soup)
     print str(len(titles)) + " titles found on page!\n"
+
     page_title = soup.select("title")[0].get_text()
 
     lwr = [t.lower() for t in page_title]

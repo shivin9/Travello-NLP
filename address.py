@@ -20,12 +20,6 @@ from create_training import getvec
 
 
 
-# GLOBAL PARAMETERS
-SEQ_LENGTH = 1
-
-# Number of units in the two hidden (LSTM) layers
-N_HIDDEN = 512
-
 # Optimization learning rate
 LEARNING_RATE = .01
 
@@ -41,6 +35,8 @@ NUM_EPOCHS = 50
 # Batch Size
 BATCH_SIZE = 256
 
+# Number of Clusters
+NUM_CLUST = 3
 
 st = TreebankWordTokenizer()
 stagger = StanfordNERTagger('/home/shivin/Documents/Travello-NLP/stanford-ner/classifiers/english.all.3class.distsim.crf.ser.gz', '/home/shivin/Documents/Travello-NLP/stanford-ner/stanford-ner.jar', encoding='utf-8')
@@ -60,6 +56,7 @@ def parsepage(url):
     response = opener.open(url)
     page = response.read()
     soup = BeautifulSoup(page, 'lxml')
+
     if 'tripadvisor' in url:
         strt = soup.findAll("span", {"class" : 'street-address'})[0].get_text().encode('ascii', 'ignore')
         loc = soup.findAll("span", {"class" : 'locality'})[0].get_text().encode('ascii', 'ignore')
@@ -72,8 +69,13 @@ def parsepage(url):
 
     for elem in soup.findAll(['script', 'style']):
         elem.extract()
-    predictrnn(url)
 
+    paras = parseurl(url)
+    pred1 = set(predictrnn(paras))
+    pred2 = set(predictlstm(paras))
+    pred = pred1.intersection(pred2)
+    addresses  = sorted(pred, key=lambda x: x[1])
+    print addresses
     # raw = soup.get_text().encode('ascii', 'ignore')
     # raw = raw.replace('\t', '')
     # hier_addr = new_address(raw)
@@ -219,22 +221,32 @@ def parseurl(url):
     return paragraphs
 
 
-def getaddr(url, pred):
-    paras = parseurl(url)
-    data = np.zeros((BATCH_SIZE, SEQ_LENGTH, 8))
-    for bn in range(BATCH_SIZE):
-        for s in range(SEQ_LENGTH):
-            if bn*SEQ_LENGTH + s >= len(paras):
+def getData(paras, seql):
+    data = [[]]
+    bn = 0
+    flag = 0
+    while 1:
+        data[bn].append([])
+        for s in range(seql):
+            if bn*seql + s > len(paras):
+                flag = 1
                 break
-            data[bn, s, :] = np.array(getvec([paras[bn*SEQ_LENGTH+s]]))
-    res = pred(data)
-    res = res.flatten()
-    for i in range(len(paras)):
-        print (paras[i], res[i])
-    return res, paras
+            data[bn].append(np.array(getvec([paras[bn*seql + s]])))
+        if flag == 1:
+            break
+        data.append([[]])
+        bn += 1
+    print data
+    data = np.array(data)
+    return data
 
 
-def predictrnn(url):
+def predictrnn(parag):
+    # GLOBAL PARAMETERS
+    SEQ_LENGTH = 1
+
+    # Number of units in the two hidden (LSTM) layers
+    N_HIDDEN = 512
     l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, 8))
 
     l_forward = lasagne.layers.RecurrentLayer(
@@ -265,20 +277,99 @@ def predictrnn(url):
         p.set_value(v)
 
     pred = theano.function([l_in.input_var],network_output,allow_input_downcast=True)
-    res, parag = getaddr(url, pred)
+    data = getData(parag, seql = SEQ_LENGTH)
+    print data.shape
+    numbat = len(data)/256
+    print numbat
+    res = pred(data)
+    for i in range(1, numbat):
+        res += pred(data[256*i:256*(i+1), :, :])
+    print len(res)
+    res = res.flatten()
+    # for i in range(len(paras)):
+    #     print (paras[i], res[i])
+
+    return printAddresses(res, parag)
+
+
+def predictlstm(parag):
+    SEQ_LENGTH = 4
+    N_HIDDEN = 64
+    l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, 8))
+
+    gate_parameters = lasagne.layers.recurrent.Gate(
+        W_in=lasagne.init.Orthogonal(), W_hid=lasagne.init.Orthogonal(),
+        b=lasagne.init.Constant(0.))
+
+    cell_parameters = lasagne.layers.recurrent.Gate(
+        W_in=lasagne.init.Orthogonal(), W_hid=lasagne.init.Orthogonal(),
+        # Setting W_cell to None denotes that no cell connection will be used.
+        W_cell=None, b=lasagne.init.Constant(0.),
+        # By convention, the cell nonlinearity is tanh in an LSTM.
+        nonlinearity=lasagne.nonlinearities.tanh)
+
+    l_lstm = lasagne.layers.recurrent.LSTMLayer(
+        l_in, N_HIDDEN,
+        # Here, we supply the gate parameters for each gate
+        ingate=gate_parameters, forgetgate=gate_parameters,
+        cell=cell_parameters, outgate=gate_parameters,
+        # We'll learn the initialization and use gradient clipping
+        learn_init=True, grad_clipping=100.)
+
+    l_lstm_back = lasagne.layers.recurrent.LSTMLayer(
+        l_in, N_HIDDEN, ingate=gate_parameters, forgetgate=gate_parameters,
+        cell=cell_parameters, outgate=gate_parameters,
+        learn_init=True, grad_clipping=100., backwards=True)
+
+    # We'll combine the forward and backward layer output by summing.
+    # Merge layers take in lists of layers to merge as input.
+    l_sum = lasagne.layers.ElemwiseSumLayer([l_lstm, l_lstm_back])
+
+    l_reshape = lasagne.layers.ReshapeLayer(l_sum, (-1, N_HIDDEN))
+
+    l_dense = lasagne.layers.DenseLayer(
+        l_reshape, num_units=1, nonlinearity=lasagne.nonlinearities.tanh)
+
+
+    l_out = lasagne.layers.ReshapeLayer(l_dense, (BATCH_SIZE, SEQ_LENGTH))
+
+    target_values = T.dmatrix('target_output')
+
+    network_output = lasagne.layers.get_output(l_out)
+    cost = T.mean((network_output - target_values)**2)
+
+    all_params = lasagne.layers.get_all_params(l_out)
+    updates = lasagne.updates.adagrad(cost, all_params, LEARNING_RATE)
+    pred = theano.function([l_in.input_var],network_output,allow_input_downcast=True)
+
+    all_param_values = np.load('./models/lstmodel-old.npy')
+
+    all_params = lasagne.layers.get_all_params(l_out)
+    for p, v in zip(all_params, all_param_values):
+        p.set_value(v)
+
+    data = getData(parag, seql = SEQ_LENGTH)
+    res = pred(data)
+    res = res.flatten()
+    return printAddresses(res, parag)
+    # for i in range(len(paras)):
+    #     print (paras[i], res[i])
+
+
+def printAddresses(res, parag):
     res = res.reshape(-1,1)
-    est = KMeans(n_clusters = 3)
+    est = KMeans(n_clusters = NUM_CLUST)
     est.fit(res)
     labels = est.labels_
     dict = {}
-    dict[0] = []
-    dict[1] = []
-    dict[2] = []
-    print len(labels), len(parag)
-    for i in range(len(parag)):
-        dict[labels[i]].append(parag[i])
 
-    print dict
+    for i in range(NUM_CLUST):
+        dict[i] = []
+
+    bestaddr = np.argmax(res)
+    for i in range(len(parag)):
+        dict[labels[i]].append((parag[i], i))
+    return dict[labels[bestaddr]]
 
 
 if __name__ == '__main__':

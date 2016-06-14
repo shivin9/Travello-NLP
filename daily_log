@@ -23,3 +23,7 @@ Need to have not only the address but also along with it random text above and b
 11th June:- Playing around with Lasagne to make sense out of it
 
 12th June:- Managed to train a RNN and an LSTM-NN which are giving reasonable accuracy... Need to cluster the terms now based on probability distributions to extract the final addresses
+
+13th June:- Made the classifier for addresses... using kmeans at the end to segregate the addresses
+
+14th June:- Researching techniques to extract addresses. Reada few papers on text tiling and structural machine learning. Will implement header extraction tomorrow

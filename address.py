@@ -19,7 +19,6 @@ sys.path.insert(0, './database/')
 from create_training import getvec
 
 
-
 # Optimization learning rate
 LEARNING_RATE = .01
 
@@ -57,6 +56,12 @@ def parsepage(url):
     page = response.read()
     soup = BeautifulSoup(page, 'lxml')
 
+    for elem in soup.findAll(['script', 'style']):
+        elem.extract()
+
+    raw = soup.get_text().encode('ascii', 'ignore')
+    paras = [p.strip() for p in raw.split('\n') if len(p.strip()) > 2]
+
     if 'tripadvisor' in url:
         strt = soup.findAll("span", {"class" : 'street-address'})[0].get_text().encode('ascii', 'ignore')
         loc = soup.findAll("span", {"class" : 'locality'})[0].get_text().encode('ascii', 'ignore')
@@ -67,15 +72,12 @@ def parsepage(url):
         print strt, loc, count
         return [[[strt, loc, count]]]
 
-    for elem in soup.findAll(['script', 'style']):
-        elem.extract()
-
-    paras = parseurl(url)
     pred1 = set(predictrnn(paras))
     pred2 = set(predictlstm(paras))
     pred = pred1.intersection(pred2)
     addresses  = sorted(pred, key=lambda x: x[1])
-    print addresses
+    final = accuAddr(addresses)
+    return final
     # raw = soup.get_text().encode('ascii', 'ignore')
     # raw = raw.replace('\t', '')
     # hier_addr = new_address(raw)
@@ -84,6 +86,21 @@ def parsepage(url):
     # # direct_addr = direct_address(raw)
     # # print direct_addr
     # return [hier_addr]
+
+def accuAddr(addresses):
+    i = 0
+    final = []
+    print addresses
+    while i < len(addresses):
+        accued = [addresses[i][0]]
+        while i + 1 < len(addresses) and (addresses[i+1][1] - addresses[i][1]) <= 3:
+            accued += [addresses[i+1][0]]
+            i += 1
+        final += [accued]
+        i += 1
+    print final
+    return [final]
+
 
 # hierarchical addresses
 def get_address(text):
@@ -208,37 +225,19 @@ def isAddr(test_addr):
             score+=1
     return float(score)/numterm > 0.4
 
-def parseurl(url):
-    opener = urllib2.build_opener()
-    opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
-    response = opener.open(url)
-    page = response.read()
-    soup = BeautifulSoup(page, 'lxml')
-    for elem in soup.findAll(['script', 'style']):
-            elem.extract()
-    raw = soup.get_text().encode('ascii', 'ignore')
-    paragraphs = [p.strip() for p in raw.split('\n') if len(p.strip()) > 2]
-    return paragraphs
-
 
 def getData(paras, seql):
-    data = [[]]
-    bn = 0
-    flag = 0
-    while 1:
-        data[bn].append([])
-        for s in range(seql):
-            if bn*seql + s > len(paras):
-                flag = 1
-                break
-            data[bn].append(np.array(getvec([paras[bn*seql + s]])))
-        if flag == 1:
-            break
-        data.append([[]])
-        bn += 1
-    print data
-    data = np.array(data)
-    return data
+    len1 = len(paras)
+    batches = len1/(BATCH_SIZE*seql) + 1
+    data1 = np.zeros((BATCH_SIZE*(batches)*seql, 8))
+    for i in range(len1):
+        data1[i] = np.array(getvec([paras[i]]))
+
+    data2 = np.zeros((BATCH_SIZE*(batches), seql, 8))
+    for i in range(len(data1)):
+        data2[i/seql, i%seql, :] = data1[i]
+    del(data1)
+    return data2
 
 
 def predictrnn(parag):
@@ -277,14 +276,11 @@ def predictrnn(parag):
         p.set_value(v)
 
     pred = theano.function([l_in.input_var],network_output,allow_input_downcast=True)
-    data = getData(parag, seql = SEQ_LENGTH)
-    print data.shape
-    numbat = len(data)/256
-    print numbat
-    res = pred(data)
-    for i in range(1, numbat):
-        res += pred(data[256*i:256*(i+1), :, :])
-    print len(res)
+    data = getData(parag, SEQ_LENGTH)
+    numbat = len(data)/BATCH_SIZE
+    res = np.zeros((numbat, BATCH_SIZE, SEQ_LENGTH))
+    for i in range(numbat):
+        res[i, :] = pred(data[BATCH_SIZE*i:BATCH_SIZE*(i+1), :, :])
     res = res.flatten()
     # for i in range(len(paras)):
     #     print (paras[i], res[i])
@@ -348,8 +344,11 @@ def predictlstm(parag):
     for p, v in zip(all_params, all_param_values):
         p.set_value(v)
 
-    data = getData(parag, seql = SEQ_LENGTH)
-    res = pred(data)
+    data = getData(parag, SEQ_LENGTH)
+    numbat = len(data)/BATCH_SIZE
+    res = np.zeros((numbat, BATCH_SIZE, SEQ_LENGTH))
+    for i in range(numbat):
+        res[i, :] = pred(data[BATCH_SIZE*i:BATCH_SIZE*(i+1), :, :])
     res = res.flatten()
     return printAddresses(res, parag)
     # for i in range(len(paras)):
@@ -367,12 +366,17 @@ def printAddresses(res, parag):
         dict[i] = []
 
     bestaddr = np.argmax(res)
+    if res[bestaddr] < 0.5:
+        return []
     for i in range(len(parag)):
         dict[labels[i]].append((parag[i], i))
     return dict[labels[bestaddr]]
 
 
-if __name__ == '__main__':
-    while 1:
-        url = raw_input("enter website to parse\n")
-        parsepage(url)
+# if __name__ == '__main__':
+#     while 1:
+#         try:
+#             url = raw_input("enter website to parse\n")
+#         except:
+#             print "invalid url"
+#         parsepage(url)

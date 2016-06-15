@@ -20,15 +20,26 @@ lens = [len(st.tokenize(p)) for p in paragraphs]
 
 # lens = np.array([len(p) for p in paragraphs])
 avg = np.average(lens)
-disc = [l>avg for l in lens]
+std = np.std(lens)
 
+disc = [l + 2*std > avg for l in lens]
+print len(disc)
+i = 0
+j = len(disc) - 1
+
+while disc[i] == 0:
+    i+=1
+
+while disc[j] == 0:
+    j-=1
+disc = disc[i:j+1]
+print len(disc)
 lensft = abs(dct(disc))
-print paragraphs
-print lens
-plt.plot(disc)
+# print paragraphs
+print lensft
+plt.plot(lens[i:j+1])
 plt.show()
 plt.plot(lensft)
 plt.show()
-l = float(len(lens))
 prd = np.argmax(lensft)
 print (np.argsort(lensft)/l)*10

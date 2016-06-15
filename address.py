@@ -1,28 +1,44 @@
 from nltk.tokenize import TreebankWordTokenizer
 from nltk.tag import StanfordNERTagger
+from sklearn.cluster import KMeans
 from stemming.porter2 import stem
 from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
+import theano.tensor as T
 import multiprocessing
-import pandas as pd
 import numpy as np
+import lasagne
 import urllib2
 import string
+import theano
 import json
 import sys
 import os
 import re
+sys.path.insert(0, './database/')
+from create_training import getvec
+
+
+# Optimization learning rate
+LEARNING_RATE = .01
+
+# All gradients above this will be clipped
+GRAD_CLIP = 100
+
+# How often should we check the output?
+PRINT_FREQ = 5
+
+# Number of epochs to train the net
+NUM_EPOCHS = 50
+
+# Batch Size
+BATCH_SIZE = 256
+
+# Number of Clusters
+NUM_CLUST = 3
 
 st = TreebankWordTokenizer()
 stagger = StanfordNERTagger('/home/shivin/Documents/Travello-NLP/stanford-ner/classifiers/english.all.3class.distsim.crf.ser.gz', '/home/shivin/Documents/Travello-NLP/stanford-ner/stanford-ner.jar', encoding='utf-8')
-
-# addr = pd.read_csv('./database/locs.csv', dtype=str)
-# countries = pd.read_csv('./database/country-codes.csv', dtype=str)
-# countries =  countries.set_index('CountryCode')['CountryName'].to_dict()
-# addr = addr.fillna('')
-# states = {}
-# cities = {}
-# countries = {}
 
 with open('./database/streets.json', 'r') as f:
     streets = json.load(f)
@@ -32,16 +48,6 @@ with open('./database/cities.json', 'r') as f:
     cities = json.load(f)
 with open('./database/countries.json', 'r') as f:
     countries = json.load(f)
-# for state in addr.State:
-#     if state not in stopwords.words('english') and len(state)>1:
-#         states[state] = 1
-
-# for citi in addr.Name:
-#     if citi not in stopwords.words('english'):
-#         cities[citi] = 1
-
-# for count in addr.fname:
-#     countries[count] = 1
 
 def parsepage(url):
     opener = urllib2.build_opener()
@@ -49,6 +55,12 @@ def parsepage(url):
     response = opener.open(url)
     page = response.read()
     soup = BeautifulSoup(page, 'lxml')
+
+    for elem in soup.findAll(['script', 'style']):
+        elem.extract()
+
+    raw = soup.get_text().encode('ascii', 'ignore')
+    paras = [p.strip() for p in raw.split('\n') if len(p.strip()) > 2]
 
     if 'tripadvisor' in url:
         strt = soup.findAll("span", {"class" : 'street-address'})[0].get_text().encode('ascii', 'ignore')
@@ -60,29 +72,37 @@ def parsepage(url):
         print strt, loc, count
         return [[[strt, loc, count]]]
 
-    for elem in soup.findAll(['script', 'style']):
-        elem.extract()
+    pred1 = set(predictrnn(paras))
+    pred2 = set(predictlstm(paras))
+    pred = pred1.intersection(pred2)
+    addresses  = sorted(pred, key=lambda x: x[1])
+    final = accuAddr(addresses)
+    return final
+    # raw = soup.get_text().encode('ascii', 'ignore')
+    # raw = raw.replace('\t', '')
+    # hier_addr = new_address(raw)
+    # print str(len(hier_addr)) + " addresses found!"
+    # print hier_addr
+    # # direct_addr = direct_address(raw)
+    # # print direct_addr
+    # return [hier_addr]
 
-    raw = soup.get_text().encode('ascii', 'ignore')
-    raw = raw.replace('\t', '')
-    # paragraphs = raw.splitlines()
-    # paragraphs = [p.strip() for p in raw.split('\n') if len(p) > 2]
-
-    raww = re.sub('[^\w]', ' ', raw)
-    tok = st.tokenize(raww)
-
-    tok1 = [t for t in tok if t not in stopwords.words('english') and len(t)>2 and
-            not re.search(r'\d', t)]
-
-    hier_addr = new_address(raw)
-    print str(len(hier_addr)) + " addresses found!"
-    print hier_addr
-
-    # direct_addr = direct_address(raw)
-    # print direct_addr
-    return [hier_addr]
+def accuAddr(addresses):
+    i = 0
+    final = []
+    print addresses
+    while i < len(addresses):
+        accued = [addresses[i][0]]
+        while i + 1 < len(addresses) and (addresses[i+1][1] - addresses[i][1]) <= 3:
+            accued += [addresses[i+1][0]]
+            i += 1
+        final += [accued]
+        i += 1
+    print final
+    return [final]
 
 
+# hierarchical addresses
 def get_address(text):
     paragraphs = [p.strip() for p in text.split('\n') if len(p.strip()) > 2]
     lens = [len(st.tokenize(p)) for p in paragraphs]
@@ -106,6 +126,7 @@ def get_address(text):
 
     return possible_addresses
 
+# one line addresses
 def direct_address(text):
     paragraphs = [p.strip() for p in text.split('\n') if len(p.strip()) > 2]
     lens = [len(st.tokenize(p)) for p in paragraphs]
@@ -191,18 +212,171 @@ def isAddr(test_addr):
         numterm+=1
         # terms = terms.lower()
         if terms in states:
-            print "state " + terms + " found!"
+            # print "state " + terms + " found!"
             score+=1
         if terms.lower() in streets:
-            print "street " + terms + " found!"
+            # print "street " + terms + " found!"
             score+=3
         if terms in cities:
-            print "city " + terms + " found!"
+            # print "city " + terms + " found!"
             score+=1
         if terms in countries:
-            print "country " + terms + " found!"
+            # print "country " + terms + " found!"
             score+=1
     return float(score)/numterm > 0.4
 
-if __name__ == '__main__':
-    parsepage()
+
+def getData(paras, seql):
+    len1 = len(paras)
+    batches = len1/(BATCH_SIZE*seql) + 1
+    data1 = np.zeros((BATCH_SIZE*(batches)*seql, 8))
+    for i in range(len1):
+        data1[i] = np.array(getvec([paras[i]]))
+
+    data2 = np.zeros((BATCH_SIZE*(batches), seql, 8))
+    for i in range(len(data1)):
+        data2[i/seql, i%seql, :] = data1[i]
+    del(data1)
+    return data2
+
+
+def predictrnn(parag):
+    # GLOBAL PARAMETERS
+    SEQ_LENGTH = 1
+
+    # Number of units in the two hidden (LSTM) layers
+    N_HIDDEN = 512
+    l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, 8))
+
+    l_forward = lasagne.layers.RecurrentLayer(
+            l_in, N_HIDDEN, grad_clipping=GRAD_CLIP,
+            W_in_to_hid=lasagne.init.HeUniform(),
+            W_hid_to_hid=lasagne.init.HeUniform(),
+            nonlinearity=lasagne.nonlinearities.tanh, only_return_final=True)
+
+    l_backward = lasagne.layers.RecurrentLayer(
+            l_in, N_HIDDEN, grad_clipping=GRAD_CLIP,
+            W_in_to_hid=lasagne.init.HeUniform(),
+            W_hid_to_hid=lasagne.init.HeUniform(),
+            nonlinearity=lasagne.nonlinearities.tanh,
+            only_return_final=True, backwards=True)
+
+    l_concat = lasagne.layers.ConcatLayer([l_forward, l_backward])
+    l_dense = lasagne.layers.DenseLayer(
+        l_concat, num_units=SEQ_LENGTH, nonlinearity=lasagne.nonlinearities.tanh)
+
+    l_out = lasagne.layers.DenseLayer(l_concat, num_units=SEQ_LENGTH, nonlinearity=lasagne.nonlinearities.tanh)
+
+    target_values = T.dmatrix('target_output')
+    network_output = lasagne.layers.get_output(l_out)
+    all_param_values = np.load('./models/rnnmodel-old.npy')
+
+    all_params = lasagne.layers.get_all_params(l_out)
+    for p, v in zip(all_params, all_param_values):
+        p.set_value(v)
+
+    pred = theano.function([l_in.input_var],network_output,allow_input_downcast=True)
+    data = getData(parag, SEQ_LENGTH)
+    numbat = len(data)/BATCH_SIZE
+    res = np.zeros((numbat, BATCH_SIZE, SEQ_LENGTH))
+    for i in range(numbat):
+        res[i, :] = pred(data[BATCH_SIZE*i:BATCH_SIZE*(i+1), :, :])
+    res = res.flatten()
+    # for i in range(len(paras)):
+    #     print (paras[i], res[i])
+
+    return printAddresses(res, parag)
+
+
+def predictlstm(parag):
+    SEQ_LENGTH = 4
+    N_HIDDEN = 64
+    l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, 8))
+
+    gate_parameters = lasagne.layers.recurrent.Gate(
+        W_in=lasagne.init.Orthogonal(), W_hid=lasagne.init.Orthogonal(),
+        b=lasagne.init.Constant(0.))
+
+    cell_parameters = lasagne.layers.recurrent.Gate(
+        W_in=lasagne.init.Orthogonal(), W_hid=lasagne.init.Orthogonal(),
+        # Setting W_cell to None denotes that no cell connection will be used.
+        W_cell=None, b=lasagne.init.Constant(0.),
+        # By convention, the cell nonlinearity is tanh in an LSTM.
+        nonlinearity=lasagne.nonlinearities.tanh)
+
+    l_lstm = lasagne.layers.recurrent.LSTMLayer(
+        l_in, N_HIDDEN,
+        # Here, we supply the gate parameters for each gate
+        ingate=gate_parameters, forgetgate=gate_parameters,
+        cell=cell_parameters, outgate=gate_parameters,
+        # We'll learn the initialization and use gradient clipping
+        learn_init=True, grad_clipping=100.)
+
+    l_lstm_back = lasagne.layers.recurrent.LSTMLayer(
+        l_in, N_HIDDEN, ingate=gate_parameters, forgetgate=gate_parameters,
+        cell=cell_parameters, outgate=gate_parameters,
+        learn_init=True, grad_clipping=100., backwards=True)
+
+    # We'll combine the forward and backward layer output by summing.
+    # Merge layers take in lists of layers to merge as input.
+    l_sum = lasagne.layers.ElemwiseSumLayer([l_lstm, l_lstm_back])
+
+    l_reshape = lasagne.layers.ReshapeLayer(l_sum, (-1, N_HIDDEN))
+
+    l_dense = lasagne.layers.DenseLayer(
+        l_reshape, num_units=1, nonlinearity=lasagne.nonlinearities.tanh)
+
+
+    l_out = lasagne.layers.ReshapeLayer(l_dense, (BATCH_SIZE, SEQ_LENGTH))
+
+    target_values = T.dmatrix('target_output')
+
+    network_output = lasagne.layers.get_output(l_out)
+    cost = T.mean((network_output - target_values)**2)
+
+    all_params = lasagne.layers.get_all_params(l_out)
+    updates = lasagne.updates.adagrad(cost, all_params, LEARNING_RATE)
+    pred = theano.function([l_in.input_var],network_output,allow_input_downcast=True)
+
+    all_param_values = np.load('./models/lstmodel-old.npy')
+
+    all_params = lasagne.layers.get_all_params(l_out)
+    for p, v in zip(all_params, all_param_values):
+        p.set_value(v)
+
+    data = getData(parag, SEQ_LENGTH)
+    numbat = len(data)/BATCH_SIZE
+    res = np.zeros((numbat, BATCH_SIZE, SEQ_LENGTH))
+    for i in range(numbat):
+        res[i, :] = pred(data[BATCH_SIZE*i:BATCH_SIZE*(i+1), :, :])
+    res = res.flatten()
+    return printAddresses(res, parag)
+    # for i in range(len(paras)):
+    #     print (paras[i], res[i])
+
+
+def printAddresses(res, parag):
+    res = res.reshape(-1,1)
+    est = KMeans(n_clusters = NUM_CLUST)
+    est.fit(res)
+    labels = est.labels_
+    dict = {}
+
+    for i in range(NUM_CLUST):
+        dict[i] = []
+
+    bestaddr = np.argmax(res)
+    if res[bestaddr] < 0.5:
+        return []
+    for i in range(len(parag)):
+        dict[labels[i]].append((parag[i], i))
+    return dict[labels[bestaddr]]
+
+
+# if __name__ == '__main__':
+#     while 1:
+#         try:
+#             url = raw_input("enter website to parse\n")
+#         except:
+#             print "invalid url"
+#         parsepage(url)

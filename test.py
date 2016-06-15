@@ -7,12 +7,6 @@ import pandas as pd
 
 app = Flask(__name__)
 
-data = pd.read_csv('./database/code-list.csv', dtype=str)
-countries = pd.read_csv('./database/country-codes.csv', dtype=str)
-countries = countries.set_index('CountryCode')
-addr = data.ix[:, 0:5]
-data["fname"] = ""
-
 @app.route('/')
 def index():
     return render_template("form1.html")

@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 import theano.tensor as T
 import multiprocessing
 import numpy as np
+import datefinder
 import lasagne
 import urllib2
 import string
@@ -39,6 +40,7 @@ NUM_CLUST = 3
 
 st = TreebankWordTokenizer()
 stagger = StanfordNERTagger('/home/shivin/Documents/Travello-NLP/stanford-ner/classifiers/english.all.3class.distsim.crf.ser.gz', '/home/shivin/Documents/Travello-NLP/stanford-ner/stanford-ner.jar', encoding='utf-8')
+
 
 with open('./database/streets.json', 'r') as f:
     streets = json.load(f)
@@ -74,9 +76,13 @@ def parsepage(url):
 
     pred1 = set(predictrnn(paras))
     pred2 = set(predictlstm(paras))
+    print pred1
+    print "################"
+    print pred2
     pred = pred1.intersection(pred2)
     addresses  = sorted(pred, key=lambda x: x[1])
     final = accuAddr(addresses)
+    print addresses
     return final
     # raw = soup.get_text().encode('ascii', 'ignore')
     # raw = raw.replace('\t', '')
@@ -93,14 +99,21 @@ def accuAddr(addresses):
     print addresses
     while i < len(addresses):
         accued = [addresses[i][0]]
-        while i + 1 < len(addresses) and (addresses[i+1][1] - addresses[i][1]) <= 3:
+        while i + 1 < len(addresses) and (addresses[i+1][1] - addresses[i][1]) <= 2:
             accued += [addresses[i+1][0]]
             i += 1
-        final += [accued]
+        if not hasdate(accued):
+            final += [accued]
         i += 1
-    print final
     return [final]
 
+# function for removing dates from addresses
+def hasdate(address):
+    str1 = " ".join(address)
+    matches = datefinder.find_dates(str1, strict=True)
+    for match in matches:
+        return True
+    return False
 
 # hierarchical addresses
 def get_address(text):
@@ -143,7 +156,7 @@ def direct_address(text):
         if bool(regexp.search(p)):
             possible_addresses.append(p)
 
-    hopefully_addresses = []
+    hopefully_addresses =- []
     for posaddr in possible_addresses:
         if len(st.tokenize(posaddr)) <= 30:
             hopefully_addresses.append(posaddr)
@@ -373,10 +386,10 @@ def printAddresses(res, parag):
     return dict[labels[bestaddr]]
 
 
-# if __name__ == '__main__':
-#     while 1:
-#         try:
-#             url = raw_input("enter website to parse\n")
-#         except:
-#             print "invalid url"
-#         parsepage(url)
+if __name__ == '__main__':
+    while 1:
+        try:
+            url = raw_input("enter website to parse\n")
+        except:
+            print "invalid url"
+        parsepage(url)

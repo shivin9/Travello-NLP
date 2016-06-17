@@ -29,3 +29,9 @@ can use library seqlearn... which is especially built for these tasks
 
 14th June:- Researching techniques to extract addresses. Reada few papers on text tiling and structural machine learning. Will implement header extraction tomorrow
 
+15th June:- Address extraction working fully... updated on the portal
+Starting title extraction
+
+16th June:- Thinking about extracting headers... Also consolidates addresses retrieved into blocks
+
+1th June:- 

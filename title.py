@@ -15,13 +15,17 @@ stagger = StanfordNERTagger('/home/shivin/Documents/Travello-NLP/stanford-ner/cl
 
 st = TreebankWordTokenizer()
 
-def getTitle(url):
+def getTitle(url, addresses):
     opener = urllib2.build_opener()
     opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
     response = opener.open(url)
     page = response.read()
     soup = BeautifulSoup(page, 'lxml')
     out = set()
+
+    raw = soup.get_text().encode('ascii', 'ignore')
+    paras = [p.strip() for p in raw.split('\n') if len(p.strip()) > 2]
+
     # separate method for ladyironchef.com
     if 'ladyironchef' in url:
         tags = soup.findAll('span', {"style":"font-size: x-large;"})
@@ -29,6 +33,16 @@ def getTitle(url):
         for tag in tags:
             name = tag.get_text().encode('ascii', 'ignore')
             titles.append(name)
+
+        if len(titles) == 0:
+            text = soup.findAll(re.compile('strong'))
+            for title in text:
+                str1 = title.get_text().encode('ascii', 'ignore')
+                str1 = str1.replace('\t', '')
+                str1 = str1.replace('\n', '')
+            if len(str1) > 2:
+                titles.append(str1)
+
         return titles
 
     # trip advisor has only a single place_name/page
@@ -38,11 +52,16 @@ def getTitle(url):
         for i in range(len(page_title)):
             if page_title[i] in string.punctuation:
                 break
-
         page_title = page_title[0:i]
         return [page_title]
+
     # clean the retrieved text
     else:
+        # this implies that most probably page is a multi-place blog
+        if len(addresses) >= 3:
+            onetitle = getoneheader(soup)
+            return onetitle
+
         # in a few rare cases the title of page can be under <Hn> inside the page also
         # header_titles = [soup.findAll('h'+str(i)) for i in range(1, 5)]
         # header_titles.append(soup.findAll('strong'))
@@ -56,43 +75,47 @@ def getTitle(url):
             str1 = str1.replace('\n', '')
             if len(str1) > 2:
                 out.add(str1)
-
-        page_title = soup.select("title")[0].get_text().encode('ascii', 'ignore').strip()
-        bkpt = 0
-        # print page
-        for i in range(len(page_title)):
-            if page_title[i] in string.punctuation and page_title[i] != '\'':
-                print page_title[i]
-                bkpt = i
-                break
-
-        print bkpt
-        page_title = page_title[0:bkpt].strip()
-
-        print out
-        print page_title
-        lwr = [t.lower() for t in out]
-        if page_title.lower() in lwr:
-            return [page_title]
-
         return out
 
-if __name__ == '__main__':
-    url = raw_input("enter website to parse\n")
-    opener = urllib2.build_opener()
-    opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
-    response = opener.open(url)
-    page = response.read()
-    soup = BeautifulSoup(page, 'lxml')
-    titles = getTitle(url)
+def getoneheader(soup):
+    page_title = soup.select("title")[0].get_text().encode('ascii', 'ignore').strip()
+    bkpt = 0
+    # print page
+    for i in range(len(page_title)):
+        if page_title[i] in string.punctuation and page_title[i] != '\'':
+            bkpt = i
+            break
 
-    print str(len(titles)) + " titles found on page!\n"
+    page_title = page_title[0:bkpt].strip()
 
-    page_title = soup.select("title")[0].get_text()
+    print out
+    print page_title
+    ## page_title in one of the titles or one of the titles in page_title
+    lwr = [t.lower() for t in out]
+    posstitle = [l for l in lwr if l in t.lower()]
+    print posstitle
+    if page_title.lower() in lwr or len(posstitle) != 0:
+        if len(page_title) < len(posstitle[0]):
+            return [page_title]
+        else:
+            return [posstitle[0]]
 
-    lwr = [t.lower() for t in page_title]
-    if page_title.lower() in lwr:
-        print "single page title " + page_title
+# if __name__ == '__main__':
+#     url = raw_input("enter website to parse\n")
+#     opener = urllib2.build_opener()
+#     opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
+#     response = opener.open(url)
+#     page = response.read()
+#     soup = BeautifulSoup(page, 'lxml')
+#     titles = getTitle(url, [[], [], []])
 
-    for t in titles:
-        print t
+#     print str(len(titles)) + " titles found on page!\n"
+
+#     page_title = soup.select("title")[0].get_text()
+
+#     lwr = [t.lower() for t in page_title]
+#     if page_title.lower() in lwr:
+#         print "single page title " + page_title
+
+#     for t in titles:
+#         print t

@@ -123,7 +123,6 @@ def oneliners():
     # for selecting the number of garbage texts above and below the address
 
     for idx in randlist:
-        print idx
         str1 = ""
         temp = []
         # print idx

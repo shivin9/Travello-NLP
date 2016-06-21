@@ -6,3 +6,4 @@ pyner/
 libraries/
 *.pyc
 images/
+def*

@@ -76,13 +76,12 @@ def parsepage(url):
 
     pred1 = set(predictrnn(paras))
     pred2 = set(predictlstm(paras))
-    print pred1
-    print "################"
-    print pred2
+    # print pred1
+    # print "################"
+    # print pred2
     pred = pred1.intersection(pred2)
     addresses  = sorted(pred, key=lambda x: x[1])
     final = accuAddr(addresses)
-    print addresses
     return final
     # raw = soup.get_text().encode('ascii', 'ignore')
     # raw = raw.replace('\t', '')
@@ -96,7 +95,6 @@ def parsepage(url):
 def accuAddr(addresses):
     i = 0
     final = []
-    print addresses
     while i < len(addresses):
         accued = [addresses[i][0]]
         while i + 1 < len(addresses) and (addresses[i+1][1] - addresses[i][1]) <= 2:
@@ -386,10 +384,10 @@ def printAddresses(res, parag):
     return dict[labels[bestaddr]]
 
 
-if __name__ == '__main__':
-    while 1:
-        try:
-            url = raw_input("enter website to parse\n")
-        except:
-            print "invalid url"
-        parsepage(url)
+# if __name__ == '__main__':
+#     while 1:
+#         try:
+#             url = raw_input("enter website to parse\n")
+#         except:
+#             print "invalid url"
+#         parsepage(url)

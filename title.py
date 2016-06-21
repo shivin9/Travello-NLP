@@ -5,8 +5,8 @@ from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
 import multiprocessing
 import numpy as np
-import string
 import urllib2
+import string
 import sys
 import os
 import re
@@ -21,15 +21,25 @@ def getTitle(url, addresses):
     response = opener.open(url)
     page = response.read()
     soup = BeautifulSoup(page, 'lxml')
+
+    for elem in soup.findAll(['script', 'style']):
+        elem.extract()
+
     out = set()
 
     raw = soup.get_text().encode('ascii', 'ignore')
     paras = [p.strip() for p in raw.split('\n') if len(p.strip()) > 2]
+    paradict = {}
+    for i in range(len(paras)):
+        if paras[i] not in paradict:
+            paradict[paras[i]] = i
 
     # separate method for ladyironchef.com
     if 'ladyironchef' in url:
         tags = soup.findAll('span', {"style":"font-size: x-large;"})
         titles = []
+        paradict = {}
+
         for tag in tags:
             name = tag.get_text().encode('ascii', 'ignore')
             titles.append(name)
@@ -52,15 +62,11 @@ def getTitle(url, addresses):
         for i in range(len(page_title)):
             if page_title[i] in string.punctuation:
                 break
+
         page_title = page_title[0:i]
         return [page_title]
 
-    # clean the retrieved text
     else:
-        # this implies that most probably page is a multi-place blog
-        if len(addresses) >= 3:
-            onetitle = getoneheader(soup)
-            return onetitle
 
         # in a few rare cases the title of page can be under <Hn> inside the page also
         # header_titles = [soup.findAll('h'+str(i)) for i in range(1, 5)]
@@ -73,11 +79,28 @@ def getTitle(url, addresses):
             str1 = title.get_text().encode('ascii', 'ignore')
             str1 = str1.replace('\t', '')
             str1 = str1.replace('\n', '')
-            if len(str1) > 2:
+            if len(str1) > 2 and (not onlyNumbers(str1)) and str1 in paras:
+                print str1
                 out.add(str1)
+
+        # this implies that most probably page is a multi-place blog
+        print addresses
+        if len(addresses[0]) <= 3:
+            onetitle = getoneheader(soup, out)
+            return onetitle
+
+        out = list(out)
+        out = sorted(out, key=lambda x: paradict[x])
         return out
 
-def getoneheader(soup):
+def onlyNumbers(teststr):
+    re1 = re.compile('.*[0-9].*')
+    re2 = re.compile('.*[a-z].*|.*[A-Z].*')
+    if bool(re1.match(teststr)) and not re2.match(teststr):
+        return True
+    return False
+
+def getoneheader(soup, out):
     page_title = soup.select("title")[0].get_text().encode('ascii', 'ignore').strip()
     bkpt = 0
     # print page
@@ -87,8 +110,6 @@ def getoneheader(soup):
             break
 
     page_title = page_title[0:bkpt].strip()
-
-    print out
     print page_title
     ## page_title in one of the titles or one of the titles in page_title
     lwr = [t.lower() for t in out]

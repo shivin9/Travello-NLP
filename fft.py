@@ -22,7 +22,7 @@ def fft(url):
     paragraphs = [p.strip() for p in raw.split('\n') if len(p.strip()) > 2]
     lens = [len(st.tokenize(p)) for p in paragraphs]
 
-    # lens = np.array([len(p) for p in paragraphs])
+    lens = np.array([len(p) for p in paragraphs])
     avg = np.average(lens)
     std = np.std(lens)
     print std
@@ -36,7 +36,7 @@ def fft(url):
     # while disc[j] == 0:
     #     j-=1
     # disc = disc[i:j+1]
-    print sum(disc)
+    # print sum(disc)
     lensft = abs(dct(lens))
     print (sum(lensft[1:10])/float(len(lens)))*10
     plt.plot(lens)
@@ -44,7 +44,23 @@ def fft(url):
     plt.plot(lensft)
     plt.show()
     prd = np.argmax(lensft)
-    # print (np.argsort(lensft)/float(len(lens)))*10
+
+    print (np.argsort(lensft)/float(len(lens)))*10
+
+def doubleMADsfromMedian(y,thresh=30):
+    # warning: this function does not check for NAs
+    # nor does it address issues when
+    # more than 50% of your data have identical values
+    m = np.median(y)
+    abs_dev = np.abs(y - m)
+    left_mad = np.median(abs_dev[y<=m])
+    right_mad = np.median(abs_dev[y>=m])
+    y_mad = np.zeros(len(y))
+    y_mad[y < m] = left_mad
+    y_mad[y > m] = right_mad
+    modified_z_score = 0.6745 * abs_dev/y_mad
+    modified_z_score[y == m] = 0
+    return modified_z_score > thresh
 
 while(1):
     url = raw_input("enter website to parse\n")

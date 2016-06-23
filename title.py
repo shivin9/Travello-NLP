@@ -12,6 +12,8 @@ import sys
 import os
 import re
 
+NUM_CLUSTERS = 2
+
 stagger = StanfordNERTagger('/home/shivin/Documents/Travello-NLP/stanford-ner/classifiers/english.all.3class.distsim.crf.ser.gz', '/home/shivin/Documents/Travello-NLP/stanford-ner/stanford-ner.jar', encoding='utf-8')
 
 st = TreebankWordTokenizer()
@@ -118,24 +120,31 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
         for address in addresses[0]:
             addrs.append(paradict[address[0]])
         addrs = np.array(addrs)
-        features = getHeaders(possheaders, addrs, posspara)
+        features = np.array(getHeaders(possheaders, addrs, posspara))
+        reqindices = np.where(features>0)[0]
+        # # classify the headers
+        # est = KMeans(n_clusters = NUM_CLUSTERS)
+        # est.fit(features)
+        # labels = est.labels_
 
-        # classify the headers
-        est = KMeans(n_clusters = 2)
-        est.fit(features)
-        labels = est.labels_
-        print labels
-        # diciding which labels are of real headers
-        s0 = len(np.where(labels==0)[0])
-        s1 = len(np.where(labels==1)[0])
+        # print features
+        # print labels
 
-        s = len(addrs)
-        distarr = np.array([s-s0, s-s1])**2
-        reqlabel = np.argmin(distarr)
-        print reqlabel
-        print labels
-        reqindices = np.where(labels==reqlabel)[0]
-        print reqindices
+        # # deciding which labels are of real headers
+        # distarr = []
+
+        # for i in range(NUM_CLUSTERS):
+        #     distarr.append(len(np.where(labels==i)[0]))
+
+        # distarr = np.array(distarr)
+        # s = len(addrs)
+        # distarr = (distarr-s)**2
+
+        # reqlabel = np.argmin(distarr)
+
+        # print reqlabel
+        # reqindices = np.where(labels==reqlabel)[0]
+        # print reqindices
 
         finalout = []
         for idx in reqindices:
@@ -149,7 +158,7 @@ def getHeaders(headers, addresses, possparas):
     for header in headers:
         distpara = min(possparas-header, key=lambda x: x if x>0 else float('inf'))
         distaddr = min(addresses-header, key=lambda x: x if x>0 else float('inf'))
-        out.append([distpara, distaddr])
+        out.append(distpara+distaddr)
     return np.array(out)
 
 

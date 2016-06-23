@@ -45,8 +45,10 @@ NUM_EPOCHS = 10
 # Batch Size
 BATCH_SIZE = 256
 
+NUM_FEATURES = 9
+
 def gen_data(p, X, y, batch_size=BATCH_SIZE):
-    x = np.zeros((batch_size, SEQ_LENGTH, 8))
+    x = np.zeros((batch_size, SEQ_LENGTH, NUM_FEATURES))
     X = np.array(X)
     y = np.array(y)
     yout = np.zeros((batch_size, SEQ_LENGTH))
@@ -63,7 +65,7 @@ def gen_data(p, X, y, batch_size=BATCH_SIZE):
 
 print "creating layers"
 
-l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, 8))
+l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, NUM_FEATURES))
 
 gate_parameters = lasagne.layers.recurrent.Gate(
     W_in=lasagne.init.Orthogonal(), W_hid=lasagne.init.Orthogonal(),
@@ -169,7 +171,7 @@ def parsepage(url):
 
 def getaddr(url):
         paras = parsepage(url)
-        data = np.zeros((BATCH_SIZE, SEQ_LENGTH, 8))
+        data = np.zeros((BATCH_SIZE, SEQ_LENGTH, NUM_FEATURES))
         for bn in range(BATCH_SIZE):
             for s in range(SEQ_LENGTH):
                 if bn*SEQ_LENGTH + s >= len(paras):
@@ -187,4 +189,7 @@ np.save("lstmodel", all_param_values)
 
 while 1:
     url = raw_input("enter website to parse\n")
-    getaddr(url)
+    try:
+        getaddr(url)
+    except:
+        print "invalid website"

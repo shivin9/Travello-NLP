@@ -50,10 +50,11 @@ def getImg(url):
         try:
             imgurl = image["src"]
             if imgurl[-3:] != "svg":
-                # print imgurl
+                print imgurl
                 imgurl=process_url(imgurl)
+                print imgurl
                 imgdata=urllib2.urlopen(imgurl).read()
-                print (imgurl, len(imgdata), image["alt"], image['height'], image['width'])
+                print (imgurl, image["alt"], image['height'], image['width'])
                 filname=basename(urlsplit(imgurl)[2])
                 output=open(filname,'wb')
                 output.write(imgdata)

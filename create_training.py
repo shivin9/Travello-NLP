@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import multiprocessing
 import pandas as pd
 import numpy as np
+import datefinder
 import string
 import urllib
 import random
@@ -69,8 +70,7 @@ def generate_data():
         # probabilistically append the restaurant name
         if rnum > 0.6:
             temp += random.sample(cafes, 1)
-            y += [1]
-            cnt += 1
+            y += [0]
 
         # necessarily append the address1
         temp.append(addrs[i]['address']['address1'].encode('ascii', 'ignore'))
@@ -87,6 +87,10 @@ def generate_data():
         temp += random.sample(garbage, gnum2)
         y += [0]*gnum2
         labels1.append(y)
+
+        # for i in range(len(y)):
+        #     print (temp[i], y[i])
+
         addresses_train.append(temp)
 
     data_vec = []
@@ -198,6 +202,7 @@ def getvec(lines):
             has phone number?(5)
             number of numbers(6)
             length of paragraph(7)
+            has date?(8)
     '''
     vec = [0]*8
     for line in lines:
@@ -223,10 +228,17 @@ def getvec(lines):
             if terms in countries:
                 vec[3] += 1
 
-            vec[5] = phnum
-            vec[6] = nums
-            vec[7] = numterm
+        vec[5] = phnum
+        vec[6] = nums
+        vec[7] = numterm
 
+        # matches = datefinder.find_dates(line, strict=True)
+        # try:
+        #     for match in matches:
+        #         vec[8] = 1
+        #         break
+        # except:
+        #     pass
     return vec
 
 

@@ -45,8 +45,10 @@ NUM_EPOCHS = 50
 # Batch Size
 BATCH_SIZE = 256
 
+NUM_FEATURES = 9
+
 def gen_data(p, X, y, batch_size=BATCH_SIZE):
-    x = np.zeros((batch_size, SEQ_LENGTH, 8))
+    x = np.zeros((batch_size, SEQ_LENGTH, NUM_FEATURES))
     X = np.array(X)
     y = np.array(y)
     yout = np.zeros((batch_size, SEQ_LENGTH))
@@ -63,7 +65,7 @@ def gen_data(p, X, y, batch_size=BATCH_SIZE):
 
 print "creating layers"
 
-l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, 8))
+l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, NUM_FEATURES))
 
 l_forward = lasagne.layers.RecurrentLayer(
         l_in, N_HIDDEN, grad_clipping=GRAD_CLIP,
@@ -125,7 +127,7 @@ try:
                 break
             avg_cost += train(x1, y11)
             avg_cost += train(x2, y22)
-        # xval, yval =gen_data(0, X2, y2)
+
         valerr = compute_cost(xval,yval)
         if flag:
             break
@@ -153,7 +155,7 @@ except:
 
     def getaddr(url):
         paras = parsepage(url)
-        data = np.zeros((BATCH_SIZE, SEQ_LENGTH, 8))
+        data = np.zeros((BATCH_SIZE, SEQ_LENGTH, NUM_FEATURES))
         for bn in range(BATCH_SIZE):
             for s in range(SEQ_LENGTH):
                 if bn*SEQ_LENGTH + s >= len(paras):

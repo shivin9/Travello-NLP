@@ -38,4 +38,8 @@ Starting title extraction
 
 20th June:- Fixed the current title getter... somewhat better
 
-21st June:- 
+21st June:- Almost done title extraction... only bottleneck is addresses
+
+22nd June:- Trying to get images. tried to improve the RNNs and the training data but to no avail...
+
+23rd June:- Improving the title extractor. Removed the need for 2nd kmeans clusterer.

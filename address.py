@@ -38,6 +38,9 @@ BATCH_SIZE = 256
 # Number of Clusters
 NUM_CLUST = 3
 
+NUM_FEATURES = 8
+
+
 st = TreebankWordTokenizer()
 stagger = StanfordNERTagger('/home/shivin/Documents/Travello-NLP/stanford-ner/classifiers/english.all.3class.distsim.crf.ser.gz', '/home/shivin/Documents/Travello-NLP/stanford-ner/stanford-ner.jar', encoding='utf-8')
 
@@ -76,12 +79,13 @@ def parsepage(url):
 
     pred1 = set(predictrnn(paras))
     pred2 = set(predictlstm(paras))
-    # print pred1
-    # print "################"
-    # print pred2
+    print pred1
+    print "################"
+    print pred2
     pred = pred1.intersection(pred2)
     addresses  = sorted(pred, key=lambda x: x[1])
     final = accuAddr(addresses)
+    # print final
     return final
     # raw = soup.get_text().encode('ascii', 'ignore')
     # raw = raw.replace('\t', '')
@@ -240,11 +244,11 @@ def isAddr(test_addr):
 def getData(paras, seql):
     len1 = len(paras)
     batches = len1/(BATCH_SIZE*seql) + 1
-    data1 = np.zeros((BATCH_SIZE*(batches)*seql, 8))
+    data1 = np.zeros((BATCH_SIZE*(batches)*seql, NUM_FEATURES))
     for i in range(len1):
         data1[i] = np.array(getvec([paras[i]]))
 
-    data2 = np.zeros((BATCH_SIZE*(batches), seql, 8))
+    data2 = np.zeros((BATCH_SIZE*(batches), seql, NUM_FEATURES))
     for i in range(len(data1)):
         data2[i/seql, i%seql, :] = data1[i]
     del(data1)
@@ -257,7 +261,7 @@ def predictrnn(parag):
 
     # Number of units in the two hidden (LSTM) layers
     N_HIDDEN = 512
-    l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, 8))
+    l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, NUM_FEATURES))
 
     l_forward = lasagne.layers.RecurrentLayer(
             l_in, N_HIDDEN, grad_clipping=GRAD_CLIP,
@@ -302,7 +306,7 @@ def predictrnn(parag):
 def predictlstm(parag):
     SEQ_LENGTH = 4
     N_HIDDEN = 64
-    l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, 8))
+    l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, NUM_FEATURES))
 
     gate_parameters = lasagne.layers.recurrent.Gate(
         W_in=lasagne.init.Orthogonal(), W_hid=lasagne.init.Orthogonal(),

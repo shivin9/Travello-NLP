@@ -42,4 +42,6 @@ Starting title extraction
 
 22nd June:- Trying to get images. tried to improve the RNNs and the training data but to no avail...
 
-23rd June:- Improving the title extractor. Removed the need for 2nd kmeans clusterer.
+23rd June:- Improving the title extractor. Removed the need for 2nd kmeans clusterer. Idea: Use CNNs instead of RNNs for address classification
+
+24th June:- Headings, paragraphs and addresses have been joined with each other..., next up images

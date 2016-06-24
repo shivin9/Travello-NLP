@@ -31,7 +31,15 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
     out = set()
 
     raw = soup.get_text().encode('ascii', 'ignore')
-    paras = [p.strip() for p in raw.split('\n') if len(p.strip()) > 2]
+    paras = []
+
+    for p in raw.split('\n'):
+        p = p.strip()
+        if len(p)>2:
+            p = p.replace('\t', '')
+            p = p.replace('\n', '')
+            paras.append(p)
+
     lens = [len(st.tokenize(p)) for p in paras]
 
     paradict = {}
@@ -77,13 +85,15 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
         # header_titles.append(soup.findAll('strong'))
         text = soup.findAll(re.compile('h[0-5]|strong'))
         possheaders = set()
-        # to select the elements which have the maximum number of common tags
-        # text = max(header_titles)
+        # to select the elements which have the maximum number of common tags-- failed idea
+        # strip the string of waste space from the sides
+
         for title in text:
             str1 = title.get_text().encode('ascii', 'ignore')
             str1 = str1.replace('\t', '')
             str1 = str1.replace('\n', '')
-            if len(str1) > 2 and (not onlyNumbers(str1)) and str1 in paras:
+            str1 = str1.strip()
+            if len(str1) > 2 and (not onlyNumbers(str1)) and str1 in paradict:
                 out.add(str1)
                 possheaders.add(paradict[str1])
 
@@ -115,50 +125,78 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
         # for posshd in posspara:
         #     print paras[posshd]
 
-        # generate indices for addresses
+        # generate indices for addresses, they are the first line of address
         addrs = []
         for address in addresses[0]:
             addrs.append(paradict[address[0]])
+
         addrs = np.array(addrs)
-        features = np.array(getHeaders(possheaders, addrs, posspara))
+        features = getHeadFeatures(possheaders, addrs, posspara)
         reqindices = np.where(features>0)[0]
-        # # classify the headers
-        # est = KMeans(n_clusters = NUM_CLUSTERS)
-        # est.fit(features)
-        # labels = est.labels_
 
-        # print features
-        # print labels
+        '''
+        # classify the headers
+        est = KMeans(n_clusters = NUM_CLUSTERS)
+        est.fit(features)
+        labels = est.labels_
 
-        # # deciding which labels are of real headers
-        # distarr = []
+        print features
+        print labels
 
-        # for i in range(NUM_CLUSTERS):
-        #     distarr.append(len(np.where(labels==i)[0]))
+        # deciding which labels are of real headers
+        distarr = []
 
-        # distarr = np.array(distarr)
-        # s = len(addrs)
-        # distarr = (distarr-s)**2
+        for i in range(NUM_CLUSTERS):
+            distarr.append(len(np.where(labels==i)[0]))
 
-        # reqlabel = np.argmin(distarr)
+        distarr = np.array(distarr)
+        s = len(addrs)
+        distarr = (distarr-s)**2
 
-        # print reqlabel
-        # reqindices = np.where(labels==reqlabel)[0]
-        # print reqindices
+        reqlabel = np.argmin(distarr)
+
+        print reqlabel
+        reqindices = np.where(labels==reqlabel)[0]
+        print reqindices'''
 
         finalout = []
         for idx in reqindices:
             print out[idx]
             finalout.append(out[idx])
 
+        newindices = []
+        for idx in reqindices:
+            newindices.append(paradict[out[idx]])
+
+        fullThing = getFull(newindices, addrs, posspara)
+
+        for onething in fullThing:
+            print (paras[onething[0]], paras[posspara[onething[1]]], addresses[0][onething[2]])
+
         return finalout
 
-def getHeaders(headers, addresses, possparas):
+def findmin(arr):
+    maxx = np.max(arr)
+    for i in range(len(arr)):
+        if arr[i] < 0:
+            arr[i] = maxx+1
+    return np.argmin(arr)
+
+def getHeadFeatures(headers, addresses, possparas):
     out = []
     for header in headers:
         distpara = min(possparas-header, key=lambda x: x if x>0 else float('inf'))
         distaddr = min(addresses-header, key=lambda x: x if x>0 else float('inf'))
         out.append(distpara+distaddr)
+    return np.array(out)
+
+
+def getFull(headers, addresses, possparas):
+    out = []
+    for header in headers:
+        parapos = findmin(possparas-header)
+        addrpos = findmin(addresses-header)
+        out.append([header, parapos, addrpos])
     return np.array(out)
 
 
@@ -168,6 +206,7 @@ def onlyNumbers(teststr):
     if bool(re1.match(teststr)) and not re2.match(teststr):
         return True
     return False
+
 
 def getoneheader(soup, out):
     page_title = soup.select("title")[0].get_text().encode('ascii', 'ignore').strip()
@@ -189,6 +228,7 @@ def getoneheader(soup, out):
             return [page_title]
         else:
             return [posstitle[0]]
+
 
 if __name__ == '__main__':
     url = raw_input("enter website to parse\n")

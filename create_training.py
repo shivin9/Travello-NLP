@@ -17,17 +17,17 @@ import re
 
 st = TreebankWordTokenizer()
 
-with open('./database/streets.json', 'r') as f:
+with open('./database/hard_data/streets.json', 'r') as f:
     streets = json.load(f)
-with open('./database/states.json', 'r') as f:
+with open('./database/hard_data/states.json', 'r') as f:
     states = json.load(f)
-with open('./database/cities.json', 'r') as f:
+with open('./database/hard_data/cities.json', 'r') as f:
     cities = json.load(f)
-with open('./database/countries.json', 'r') as f:
+with open('./database/hard_data/countries.json', 'r') as f:
     countries = json.load(f)
-with open('./database/garbage', 'r') as f:
+with open('./database/hard_data/garbage', 'r') as f:
     garbage = f.read()
-with open('./database/cafes', 'r') as f:
+with open('./database/hard_data/cafes', 'r') as f:
     cafes = f.read()
 
 
@@ -42,12 +42,15 @@ cafes = [c for c in cafes if c != '']
 
 labels1 = []
 labels2 = []
+lengths1 = []
+lengths2 = []
+
 summ = 0
 for key in streets.keys():
     summ += streets[key]
 
 def generate_data():
-    with open('./database/walmart-full.json') as addrs:
+    with open('./database/hard_data/walmart-full.json') as addrs:
         addrs = json.load(addrs)
 
     addresses_train = []
@@ -87,6 +90,7 @@ def generate_data():
         temp += random.sample(garbage, gnum2)
         y += [0]*gnum2
         labels1.append(y)
+        lengths1.append(len(y))
 
         # for i in range(len(y)):
         #     print (temp[i], y[i])
@@ -105,17 +109,20 @@ def generate_data():
             newy.append(para)
 
 
-    with open("./database/train1", "w") as f:
+    with open("./database/features/train1", "w") as f:
         print >> f, addresses_train
 
-    with open("./database/labels1.py", "w") as f1:
+    with open("./database/features/labels1.py", "w") as f1:
         print >> f1, newy
 
-    with open("./database/datavec1.py", "w") as f2:
+    with open("./database/features/lenghts1.py", "w") as f1:
+        print >> f1, lengths1
+
+    with open("./database/features/datavec1.py", "w") as f2:
         print >> f2, data_vec
 
 def oneliners():
-    with open('./database/us_rest1.json') as rests:
+    with open('./database/hard_data/us_rest1.json') as rests:
         rests = json.load(rests)
     print "generating one line addresses..."
 
@@ -161,7 +168,7 @@ def oneliners():
         # print temp
         y1 += [1]
         y1 += [0]*gnum2
-
+        lengths2.append(len(y1))
         labels2.append(y1)
         one_line_addrs.append(temp)
 
@@ -176,13 +183,16 @@ def oneliners():
         for para in file:
             newy.append(para)
 
-    with open("./database/train2", "w") as f:
+    with open("./database/features/train2", "w") as f:
         print >> f, one_line_addrs
 
-    with open("./database/labels2.py", "w") as f1:
+    with open("./database/features/labels2.py", "w") as f1:
         print >> f1, newy
 
-    with open("./database/datavec2.py", "w") as f2:
+    with open("./database/features/lengths2.py", "w") as f1:
+        print >> f1, lengths2
+
+    with open("./database/features/datavec2.py", "w") as f2:
         print >> f2, data_vec
 
 # changed to remove sliding window approach

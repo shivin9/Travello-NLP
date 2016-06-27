@@ -45,13 +45,13 @@ st = TreebankWordTokenizer()
 stagger = StanfordNERTagger('/home/shivin/Documents/Travello-NLP/stanford-ner/classifiers/english.all.3class.distsim.crf.ser.gz', '/home/shivin/Documents/Travello-NLP/stanford-ner/stanford-ner.jar', encoding='utf-8')
 
 
-with open('./database/streets.json', 'r') as f:
+with open('./database/features/streets.json', 'r') as f:
     streets = json.load(f)
-with open('./database/states.json', 'r') as f:
+with open('./database/features/states.json', 'r') as f:
     states = json.load(f)
-with open('./database/cities.json', 'r') as f:
+with open('./database/features/cities.json', 'r') as f:
     cities = json.load(f)
-with open('./database/countries.json', 'r') as f:
+with open('./database/features/countries.json', 'r') as f:
     countries = json.load(f)
 
 def parsepage(url):

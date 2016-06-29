@@ -19,6 +19,7 @@ import theano.tensor as T
 import lasagne
 import sys
 sys.path.insert(0, './database/')
+sys.path.insert(0, './database/features')
 from datavec1 import X1
 from datavec2 import X2
 from labels1 import y1
@@ -45,7 +46,7 @@ NUM_EPOCHS = 10
 # Batch Size
 BATCH_SIZE = 256
 
-NUM_FEATURES = 9
+NUM_FEATURES = 8
 
 def gen_data(p, X, y, batch_size=BATCH_SIZE):
     x = np.zeros((batch_size, SEQ_LENGTH, NUM_FEATURES))

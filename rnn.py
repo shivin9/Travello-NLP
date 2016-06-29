@@ -19,6 +19,8 @@ import theano.tensor as T
 import lasagne
 import sys
 sys.path.insert(0, './database/')
+sys.path.insert(0, './database/features')
+
 from datavec1 import X1
 from datavec2 import X2
 from labels1 import y1
@@ -45,7 +47,7 @@ NUM_EPOCHS = 50
 # Batch Size
 BATCH_SIZE = 256
 
-NUM_FEATURES = 9
+NUM_FEATURES = 8
 
 def gen_data(p, X, y, batch_size=BATCH_SIZE):
     x = np.zeros((batch_size, SEQ_LENGTH, NUM_FEATURES))
@@ -84,7 +86,7 @@ l_concat = lasagne.layers.ConcatLayer([l_forward, l_backward])
 l_dense = lasagne.layers.DenseLayer(
     l_concat, num_units=SEQ_LENGTH, nonlinearity=lasagne.nonlinearities.tanh)
 
-l_out = lasagne.layers.DenseLayer(l_concat, num_units=SEQ_LENGTH, nonlinearity=lasagne.nonlinearities.tanh)
+l_out = lasagne.layers.DenseLayer(l_dense, num_units=SEQ_LENGTH, nonlinearity=lasagne.nonlinearities.tanh)
 
 target_values = T.dmatrix('target_output')
 network_output = lasagne.layers.get_output(l_out)
@@ -100,7 +102,7 @@ compute_cost = theano.function([l_in.input_var, target_values], cost, allow_inpu
 pred = theano.function([l_in.input_var],network_output,allow_input_downcast=True)
 data_size = len(X1)
 
-with open('testdoc', 'r') as f1:
+with open('./database/testdoc', 'r') as f1:
         res = f1.read()
 
 paragraphs = [p.strip() for p in res.split('\n') if len(p.strip()) > 2][:-2]
@@ -148,9 +150,10 @@ except:
         page = response.read()
         soup = BeautifulSoup(page, 'lxml')
         for elem in soup.findAll(['script', 'style']):
-                elem.extract()
+            elem.extract()
         raw = soup.get_text().encode('ascii', 'ignore')
         paragraphs = [p.strip() for p in raw.split('\n') if len(p.strip()) > 2]
+        print paragraphs
         return paragraphs
 
     def getaddr(url):

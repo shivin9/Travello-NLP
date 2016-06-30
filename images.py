@@ -2,6 +2,7 @@ from posixpath import basename,dirname
 from urlparse import urlsplit
 from urlparse import urlparse
 from bs4 import BeautifulSoup
+import multiprocessing
 from PIL import Image
 import multiprocessing
 import urllib2
@@ -40,31 +41,27 @@ def getImg(url):
         pass
     os.chdir("images/"+dirname)
     collected_images = []
+
     for image in images:
         try:
             imgurl=re.findall('img .*src="(.*?)"', str(image))[0]
             if imgurl[-3:] != "svg":
                 imgurl=process_url(imgurl)
 
-                if 'height' in str(image):
+                if 'height' in str(image) and 'width' in str(image):
                     if image['height'] > 80 and image['width'] > 80:
                         collected_images.append(image)
                         print (imgurl, image["alt"], image['height'], image['width'])
 
                 else:
                     imgdata=urllib2.urlopen(imgurl).read()
-                    if len(imgdata) > 1000:
+                    if len(imgdata) > 5000:
                         collected_images.append(image)
-                        print image
+                        print (image, len(imgdata))
 
-                # filname=basename(urlsplit(imgurl)[2])
-                # output=open(filname,'wb')
-                # output.write(imgdata)
-                # output.close()
-                # os.remove(filename)
         except:
             pass
-
+    return collected_images
 
 if __name__ == '__main__':
     url = raw_input("enter website to get images from\n")

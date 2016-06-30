@@ -79,13 +79,13 @@ def parsepage(url):
 
     pred1 = set(predictrnn(paras))
     pred2 = set(predictlstm(paras))
-    # print pred1
-    # print "################"
-    # print pred2
+    print pred1
+    print "################"
+    print pred2
     pred = pred1.intersection(pred2)
     addresses  = sorted(pred, key=lambda x: x[1])
     final = accuAddr(addresses)
-    # print final
+    print final
     return final
     # raw = soup.get_text().encode('ascii', 'ignore')
     # raw = raw.replace('\t', '')
@@ -297,8 +297,8 @@ def predictrnn(parag):
     for i in range(numbat):
         res[i, :] = pred(data[BATCH_SIZE*i:BATCH_SIZE*(i+1), :, :])
     res = res.flatten()
-    # for i in range(len(paras)):
-    #     print (paras[i], res[i])
+    for i in range(len(parag)):
+        print (parag[i], res[i])
 
     return printAddresses(res, parag)
 
@@ -365,9 +365,9 @@ def predictlstm(parag):
     for i in range(numbat):
         res[i, :] = pred(data[BATCH_SIZE*i:BATCH_SIZE*(i+1), :, :])
     res = res.flatten()
+    for i in range(len(parag)):
+        print (parag[i], res[i])
     return printAddresses(res, parag)
-    # for i in range(len(paras)):
-    #     print (paras[i], res[i])
 
 
 def printAddresses(res, parag):

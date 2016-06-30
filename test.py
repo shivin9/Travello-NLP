@@ -15,7 +15,6 @@ def index():
 def post_form():
     url = request.form['text']
     str_to_return = getStuff(url)
-    print str_to_return
     # addresses = parsepage(url)
     # titles = getTitle(url, addresses)
     # str_to_return = 'Titles:<br>'

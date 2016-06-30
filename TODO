@@ -1,2 +1,4 @@
 Fine tune the neural network... it's returning nonsense also right now
-Try HMM and Structures Perceptron
+Try HMM and Structures Perceptron :- fails...
+
+try to apply another filter over the output of the Neural Network remove further nonsense.

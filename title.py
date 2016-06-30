@@ -73,7 +73,7 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
                              'Write-up'  : "***to_implement*** :(",
                              'Address'   : str(addresses[i])}
 
-        return json.dumps(jsonoutput, indent=4)
+        return jsonoutput
 
     # trip advisor has only a single place_name/page
     elif 'tripadvisor' in url:
@@ -88,7 +88,7 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
         jsonoutput[1] = {'Place Name': page_title,
                          'Write-up'  : "***to_implement*** :(",
                          'Address'   : str(addresses)}
-        return json.dumps(jsonoutput, indent=4)
+        return jsonoutput
 
     else:
 
@@ -110,13 +110,17 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
                 possheaders.add(paradict[str1])
 
         possheaders = sorted(list(possheaders))
-        print possheaders
+        # print possheaders
 
         # this implies that most probably page is a multi-place blog
         # print addresses
         if len(addresses[0]) <= 3:
             onetitle = getoneheader(soup, out)
-            return onetitle
+            jsonoutput = {}
+            jsonoutput[1] = {'Place Name': onetitle,
+                         'Write-up'  : "***to_implement*** :(",
+                         'Address'   : str(addresses[0])}
+            return jsonoutput
 
         out = list(out)
         out = sorted(out, key=lambda x: paradict[x])
@@ -190,8 +194,7 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
                              'Write-up'  : paras[posspara[onething[1]]],
                              'Address'   : addresses[0][onething[2]]
                             }
-        print jsonoutput
-        return json.dumps(jsonoutput, indent=4)
+        return jsonoutput
 
 
 def findmin(arr):

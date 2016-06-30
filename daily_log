@@ -50,4 +50,6 @@ Starting title extraction
 
 28th June:- trying rolling, removing errors
 
-29th June:- trying xgboost... rolling not working somehow
+29th June:- trying xgboost... rolling not working somehow. Fixed the RNN model. Will go forward with that and try to use it with xgboost.
+
+30th June:- will do the other tasks on the list instead of the classifier. 

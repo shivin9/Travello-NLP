@@ -18,8 +18,8 @@ def process_url(raw_url):
      raw_url=raw_url.replace(' ','%20')
      return raw_url
 
-
-def getImg(url, titles):
+# get the images first and then join them later... required if parallelized later
+def getImg(url):
     parse_object=urlparse(url)
     dirname=basename(parse_object.path)
 

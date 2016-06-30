@@ -79,9 +79,9 @@ def parsepage(url):
 
     pred1 = set(predictrnn(paras))
     pred2 = set(predictlstm(paras))
-    print pred1
-    print "################"
-    print pred2
+    # print pred1
+    # print "################"
+    # print pred2
     pred = pred1.intersection(pred2)
     addresses  = sorted(pred, key=lambda x: x[1])
     final = accuAddr(addresses)
@@ -386,7 +386,6 @@ def printAddresses(res, parag):
     for i in range(len(parag)):
         dict[labels[i]].append((parag[i], i))
     return dict[labels[bestaddr]]
-
 
 # if __name__ == '__main__':
 #     while 1:

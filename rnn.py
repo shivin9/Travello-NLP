@@ -19,8 +19,6 @@ import theano.tensor as T
 import lasagne
 import sys
 sys.path.insert(0, './database/')
-sys.path.insert(0, './database/features')
-
 from datavec1 import X1
 from datavec2 import X2
 from labels1 import y1
@@ -47,10 +45,8 @@ NUM_EPOCHS = 50
 # Batch Size
 BATCH_SIZE = 256
 
-NUM_FEATURES = 8
-
 def gen_data(p, X, y, batch_size=BATCH_SIZE):
-    x = np.zeros((batch_size, SEQ_LENGTH, NUM_FEATURES))
+    x = np.zeros((batch_size, SEQ_LENGTH, 8))
     X = np.array(X)
     y = np.array(y)
     yout = np.zeros((batch_size, SEQ_LENGTH))
@@ -67,7 +63,7 @@ def gen_data(p, X, y, batch_size=BATCH_SIZE):
 
 print "creating layers"
 
-l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, NUM_FEATURES))
+l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, 8))
 
 l_forward = lasagne.layers.RecurrentLayer(
         l_in, N_HIDDEN, grad_clipping=GRAD_CLIP,
@@ -83,10 +79,7 @@ l_backward = lasagne.layers.RecurrentLayer(
         only_return_final=True, backwards=True)
 
 l_concat = lasagne.layers.ConcatLayer([l_forward, l_backward])
-l_dense = lasagne.layers.DenseLayer(
-    l_concat, num_units=SEQ_LENGTH, nonlinearity=lasagne.nonlinearities.tanh)
-
-l_out = lasagne.layers.DenseLayer(l_dense, num_units=SEQ_LENGTH, nonlinearity=lasagne.nonlinearities.tanh)
+l_out = lasagne.layers.DenseLayer(l_concat, num_units=SEQ_LENGTH, nonlinearity=lasagne.nonlinearities.tanh)
 
 target_values = T.dmatrix('target_output')
 network_output = lasagne.layers.get_output(l_out)
@@ -102,7 +95,7 @@ compute_cost = theano.function([l_in.input_var, target_values], cost, allow_inpu
 pred = theano.function([l_in.input_var],network_output,allow_input_downcast=True)
 data_size = len(X1)
 
-with open('./database/testdoc', 'r') as f1:
+with open('testdoc', 'r') as f1:
         res = f1.read()
 
 paragraphs = [p.strip() for p in res.split('\n') if len(p.strip()) > 2][:-2]
@@ -129,7 +122,7 @@ try:
                 break
             avg_cost += train(x1, y11)
             avg_cost += train(x2, y22)
-
+        # xval, yval =gen_data(0, X2, y2)
         valerr = compute_cost(xval,yval)
         if flag:
             break
@@ -143,36 +136,35 @@ except:
     np.save("rnnmodel", all_param_values)
 
 
-    def parsepage(url):
-        opener = urllib2.build_opener()
-        opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
-        response = opener.open(url)
-        page = response.read()
-        soup = BeautifulSoup(page, 'lxml')
-        for elem in soup.findAll(['script', 'style']):
+def parsepage(url):
+    opener = urllib2.build_opener()
+    opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
+    response = opener.open(url)
+    page = response.read()
+    soup = BeautifulSoup(page, 'lxml')
+    for elem in soup.findAll(['script', 'style']):
             elem.extract()
-        raw = soup.get_text().encode('ascii', 'ignore')
-        paragraphs = [p.strip() for p in raw.split('\n') if len(p.strip()) > 2]
-        print paragraphs
-        return paragraphs
+    raw = soup.get_text().encode('ascii', 'ignore')
+    paragraphs = [p.strip() for p in raw.split('\n') if len(p.strip()) > 2]
+    return paragraphs
 
-    def getaddr(url):
-        paras = parsepage(url)
-        data = np.zeros((BATCH_SIZE, SEQ_LENGTH, NUM_FEATURES))
-        for bn in range(BATCH_SIZE):
-            for s in range(SEQ_LENGTH):
-                if bn*SEQ_LENGTH + s >= len(paras):
-                    break
-                data[bn, s, :] = np.array(getvec([paras[bn*SEQ_LENGTH+s]]))
-        res = pred(data)
-        res = res.flatten()
-        for i in range(len(paras)):
-            print (paras[i], res[i])
-        return data
+def getaddr(url):
+    paras = parsepage(url)
+    data = np.zeros((BATCH_SIZE, SEQ_LENGTH, 8))
+    for bn in range(BATCH_SIZE):
+        for s in range(SEQ_LENGTH):
+            if bn*SEQ_LENGTH + s >= len(paras):
+                break
+            data[bn, s, :] = np.array(getvec([paras[bn*SEQ_LENGTH+s]]))
+    res = pred(data)
+    res = res.flatten()
+    for i in range(len(paras)):
+        print (paras[i], res[i])
+    return data
 
-    while 1:
-        url = raw_input("enter website to parse\n")
-        try:
-            getaddr(url)
-        except:
-            print "invalid website"
+while 1:
+    url = raw_input("enter website to parse\n")
+    try:
+        getaddr(url)
+    except:
+        print "invalid website"

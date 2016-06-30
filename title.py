@@ -8,6 +8,7 @@ import multiprocessing
 import numpy as np
 import urllib2
 import string
+import json
 import sys
 import os
 import re
@@ -65,7 +66,14 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
             if len(str1) > 2:
                 titles.append(str1)
 
-        return titles
+        jsonoutput = {}
+
+        for i in range(min(len(addresses), len(titles))):
+            jsonoutput[i] = {'Place Name': titles[i],
+                             'Write-up'  : "***to_implement*** :(",
+                             'Address'   : str(addresses[i])}
+
+        return json.dumps(jsonoutput, indent=4)
 
     # trip advisor has only a single place_name/page
     elif 'tripadvisor' in url:
@@ -76,7 +84,11 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
                 break
 
         page_title = page_title[0:i]
-        return [page_title]
+        jsonoutput = {}
+        jsonoutput[1] = {'Place Name': page_title,
+                         'Write-up'  : "***to_implement*** :(",
+                         'Address'   : str(addresses)}
+        return json.dumps(jsonoutput, indent=4)
 
     else:
 
@@ -132,7 +144,7 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
 
         addrs = np.array(addrs)
         features = getHeadFeatures(possheaders, addrs, posspara)
-        reqindices = np.where(features>0)[0]
+        reqindices = np.where(features > 0)[0]
 
         '''
         # classify the headers
@@ -170,10 +182,17 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
 
         fullThing = getFull(newindices, addrs, posspara)
 
-        for onething in fullThing:
-            print (paras[onething[0]], paras[posspara[onething[1]]], addresses[0][onething[2]])
+        jsonoutput = {}
 
-        return finalout
+        for i in range(len(fullThing)):
+            onething = fullThing[i]
+            jsonoutput[i] = {'Place Name': paras[onething[0]],
+                             'Write-up'  : paras[posspara[onething[1]]],
+                             'Address'   : addresses[0][onething[2]]
+                            }
+        print jsonoutput
+        return json.dumps(jsonoutput, indent=4)
+
 
 def findmin(arr):
     maxx = np.max(arr)
@@ -181,6 +200,7 @@ def findmin(arr):
         if arr[i] < 0:
             arr[i] = maxx+1
     return np.argmin(arr)
+
 
 def getHeadFeatures(headers, addresses, possparas):
     out = []

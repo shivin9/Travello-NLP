@@ -14,8 +14,8 @@ def getStuff(url):
     choices = [str(image) for image in images]
 
     for i in range(len(fullThing)):
-        rightImage = process.extractOne(fullThing[i]['Place Name'], choices)[0]
-        imgurls=re.findall('img .*src="(.*?)"', rightImage)
+        rightImage = process.extractOne(fullThing[i]['Place Name'], choices)
+        imgurls=re.findall('img .*src="(.*?)"', rightImage[0])
         fullThing[i]['Image URL'] = imgurls[0]
 
     fullThing = json.dumps(fullThing, indent=4)

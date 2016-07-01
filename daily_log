@@ -52,4 +52,6 @@ Starting title extraction
 
 29th June:- trying xgboost... rolling not working somehow. Fixed the RNN model. Will go forward with that and try to use it with xgboost.
 
-30th June:- will do the other tasks on the list instead of the classifier. 
+30th June:- will do the other tasks on the list instead of the classifier. Completed the JSONify of the aggregated results. Also implemented the image assigning module
+
+1st July! :- will try to restructure the code. make it more like a package so that classifiers can be tested easily later.

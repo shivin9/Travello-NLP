@@ -1,8 +1,5 @@
 from nltk.tokenize import TreebankWordTokenizer
-from nltk.tag import StanfordNERTagger
 from sklearn.cluster import KMeans
-from stemming.porter2 import stem
-from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
 import theano.tensor as T
 import multiprocessing
@@ -18,7 +15,7 @@ import os
 import re
 sys.path.insert(0, './database/')
 from create_training import getvec
-
+from utils import parsePage
 
 # Optimization learning rate
 LEARNING_RATE = .01
@@ -40,10 +37,7 @@ NUM_CLUST = 3
 
 NUM_FEATURES = 8
 
-
 st = TreebankWordTokenizer()
-stagger = StanfordNERTagger('/home/shivin/Documents/Travello-NLP/stanford-ner/classifiers/english.all.3class.distsim.crf.ser.gz', '/home/shivin/Documents/Travello-NLP/stanford-ner/stanford-ner.jar', encoding='utf-8')
-
 
 with open('./database/hard_data/streets.json', 'r') as f:
     streets = json.load(f)
@@ -55,17 +49,7 @@ with open('./database/hard_data/countries.json', 'r') as f:
     countries = json.load(f)
 
 def parsepage(url):
-    opener = urllib2.build_opener()
-    opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
-    response = opener.open(url)
-    page = response.read()
-    soup = BeautifulSoup(page, 'lxml')
-
-    for elem in soup.findAll(['script', 'style']):
-        elem.extract()
-
-    raw = soup.get_text().encode('ascii', 'ignore')
-    paras = [p.strip() for p in raw.split('\n') if len(p.strip()) > 2]
+    soup, paras, paradict = parsePage(url)
 
     if 'tripadvisor' in url:
         strt = soup.findAll("span", {"class" : 'street-address'})[0].get_text().encode('ascii', 'ignore')

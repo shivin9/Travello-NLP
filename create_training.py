@@ -68,7 +68,7 @@ def generate_data():
         # gnum1 = 0
         # gnum2 = 0
         temp += random.sample(garbage, gnum1)
-        y += [0]*gnum1
+        y += [0] * gnum1
 
         # probabilistically append the restaurant name
         if rnum > 0.6:
@@ -86,9 +86,9 @@ def generate_data():
             if rnum > 0.6 and 'phone' in addrs[i]:
                 temp.append(addrs[i]['phone'].encode('ascii', 'ignore'))
                 cnt += 1
-        y += [1]*cnt
+        y += [1] * cnt
         temp += random.sample(garbage, gnum2)
-        y += [0]*gnum2
+        y += [0] * gnum2
         labels1.append(y)
         lengths1.append(len(y))
 
@@ -214,7 +214,7 @@ def getvec(lines):
             length of paragraph(7)
             has date?(8)
     '''
-    vec = [0]*8
+    vec = [0] * 8
     for line in lines:
         phnum = len(reph.findall(line))
         nums = len(renum.findall(line))

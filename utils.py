@@ -1,14 +1,15 @@
 from fuzzywuzzy import process
 from urlparse import urlparse
-from urlparse import urlsplit
+from sklearn.cluster import KMeans
 from bs4 import BeautifulSoup
-from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
 import multiprocessing
+import numpy as np
 from PIL import Image
 import urllib2
 import json
-import os
 import re
+
 
 # will parse the page only once
 def parsePage(url):
@@ -26,19 +27,20 @@ def parsePage(url):
 
     for p in raw.split('\n'):
         p = p.strip()
-        if len(p)>2:
+        if len(p) > 2:
             p = p.replace('\t', '')
             p = p.replace('\n', '')
             paragraphs.append(p)
 
     # lens can be computed on it's own
     paradict = {}
-    for i in range(len(paras)):
+    for i in range(len(paragraphs)):
         if paragraphs[i] not in paradict:
             paradict[paragraphs[i]] = i
 
     images = getImg(url)
     return soup, paragraphs, images, paradict
+
 
 def consolidateStuff(titles, addresses, images, paradict, paragraphs):
     lens = [len(p) for p in paragraphs]
@@ -56,23 +58,24 @@ def consolidateStuff(titles, addresses, images, paradict, paragraphs):
     for i in range(len(fullThing)):
         onething = fullThing[i]
         jsonoutput[i] = {'Place Name': paragraphs[onething[0]],
-                         'Write-up'  : paragraphs[posspara[onething[1]]],
-                         'Address'   : addresses[0][onething[2]]
-                        }
+                         'Write-up': paragraphs[posspara[onething[1]]],
+                         'Address': addresses[0][onething[2]]
+                         }
 
     choices = [str(image) for image in images]
 
     for i in range(len(fullThing)):
         rightImage = process.extractOne(jsonoutput[i]['Place Name'], choices)
-        imgurls=re.findall('img .*src="(.*?)"', rightImage[0])
+        imgurls = re.findall('img .*src="(.*?)"', rightImage[0])
         jsonoutput[i]['Image URL'] = imgurls[0]
 
     return json.dumps(jsonoutput, indent=4)
 
+
 def LongParas(lens):
     res = np.array(lens)
     res = res.reshape(-1,1)
-    est = KMeans(n_clusters = 2)
+    est = KMeans(n_clusters=2)
     est.fit(res)
     labels = est.labels_
     bestpara = np.argmax(res)
@@ -104,13 +107,14 @@ def getFull(headers, addresses, possparas):
 
 
 def process_url(raw_url):
- if ' ' not in raw_url[-1]:
-     raw_url=raw_url.replace(' ','%20')
-     return raw_url
- elif ' ' in raw_url[-1]:
-     raw_url=raw_url[:-1]
-     raw_url=raw_url.replace(' ','%20')
-     return raw_url
+    if ' ' not in raw_url[-1]:
+        raw_url = raw_url.replace(' ', '%20')
+
+    elif ' ' in raw_url[-1]:
+        raw_url = raw_url[:-1]
+        raw_url = raw_url.replace(' ', '%20')
+
+    return raw_url
 
 
 # get the images first and then join them later... required if parallelized later
@@ -123,15 +127,15 @@ def getImg(url):
     urlcontent=opener.open(url).read()
     soup = BeautifulSoup(urlcontent, "lxml")
     images = soup.findAll("img")
-    imgurls=re.findall('img .*src="(.*?)"',urlcontent)
+    imgurls = re.findall('img .*src="(.*?)"', urlcontent)
 
     collected_images = []
 
     for image in images:
         try:
-            imgurl=re.findall('img .*src="(.*?)"', str(image))[0]
+            imgurl = re.findall('img .*src="(.*?)"', str(image))[0]
             if imgurl[-3:] != "svg":
-                imgurl=process_url(imgurl)
+                imgurl = process_url(imgurl)
 
                 if 'height' in str(image) and 'width' in str(image):
                     if int(image['height']) > 80 and int(image['width']) > 80:
@@ -139,7 +143,7 @@ def getImg(url):
                         # print (imgurl, image["alt"], image['height'], image['width'])
 
                 else:
-                    imgdata=urllib2.urlopen(imgurl).read()
+                    imgdata = urllib2.urlopen(imgurl).read()
                     if len(imgdata) > 5000:
                         collected_images.append(image)
                         # print (image, len(imgdata))

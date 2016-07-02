@@ -1,29 +1,19 @@
 from nltk.tokenize import TreebankWordTokenizer
-from nltk.tag import StanfordNERTagger
-from stemming.porter2 import stem
-from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
-import multiprocessing
-import pandas as pd
 import numpy as np
 import urllib2
-import string
-import json
 import sys
-import os
-import re
-
-st = TreebankWordTokenizer()
 import theano
 import theano.tensor as T
 import lasagne
-import sys
 sys.path.insert(0, './database/')
+
 from datavec1 import X1
 from datavec2 import X2
 from labels1 import y1
 from labels2 import y2
 from create_training import getvec
+st = TreebankWordTokenizer()
 
 SEQ_LENGTH = 1
 
@@ -102,7 +92,7 @@ paragraphs = [p.strip() for p in res.split('\n') if len(p.strip()) > 2][:-2]
 out = []
 for p in paragraphs:
     out.append(getvec(p))
-ans = [0,0,1,1,1,0,0,0,0,0,0,0][:-2]
+ans = [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0][:-2]
 out = np.array(out)
 ans = np.array(ans)
 xval, yval = gen_data(0, out, ans)
@@ -116,14 +106,14 @@ try:
         for _ in range(PRINT_FREQ):
             x1, y11 = gen_data(p, X1, y1)
             x2, y22 = gen_data(p, X2, y2)
-            p+=BATCH_SIZE*SEQ_LENGTH/NUM_EPOCHS
+            p += BATCH_SIZE*SEQ_LENGTH/NUM_EPOCHS
             if p + BATCH_SIZE*SEQ_LENGTH >= data_size:
                 flag = 1
                 break
             avg_cost += train(x1, y11)
             avg_cost += train(x2, y22)
         # xval, yval =gen_data(0, X2, y2)
-        valerr = compute_cost(xval,yval)
+        valerr = compute_cost(xval, yval)
         if flag:
             break
         # if valerr < 0.01 and it > 50:

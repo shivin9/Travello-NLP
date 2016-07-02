@@ -1,5 +1,4 @@
 from utils import parsePage, LongParas
-from sklearn.cluster import KMeans
 from bs4 import BeautifulSoup
 import numpy as np
 import urllib2
@@ -46,8 +45,13 @@ def getTitle(soup, paragraphs, paradict, addresses=[[1, 2, 3, 4]]):
         posspara = LongParas(lens)
 
         # generate indices for addresses, they are the first line of address
+        addrs = []
+        # the head of addresses
+        for address in addresses[0]:
+            addrs.append(paradict[address[0]])
+        addrs = np.array(addrs)
 
-        features = getHeadFeatures(possheaders, addrs, posspara)
+        features = getHeadFeatures(possibleHeaders, addrs, posspara)
         reqindices = np.where(features > 0)[0]
 
         '''
@@ -76,7 +80,7 @@ def getTitle(soup, paragraphs, paradict, addresses=[[1, 2, 3, 4]]):
         print reqindices'''
 
         for idx in reqindices:
-            headerIndices.append(possheaders[idx])
+            headerIndices.append(possibleHeaders[idx])
 
     return headerIndices
 
@@ -123,7 +127,7 @@ def GenPage(soup, paradict):
         head = head.replace('\n', '')
         head = head.strip()
         if len(head) > 2 and (not onlyNumbers(head)) and head in paradict:
-            possheaders.add(paradict[str1])
+            possheaders.add(paradict[head])
 
     possheaders = sorted(list(possheaders))
     return possheaders

@@ -36,14 +36,14 @@ BATCH_SIZE = 256
 # Number of Clusters
 NUM_CLUST = 3
 
-NUM_FEATURES = 8
+NUM_FEATURES = 9
 
-params = {"LEARNING_RATE": 0.01
-          "GRAD_CLIP"    : 100
-          "PRINT_FREQ"   : 5
-          "NUM_EPOCHS"   : 50
-          "BATCH_SIZE"   : 256
-          "NUM_CLUST"    : 3
+params = {"LEARNING_RATE": 0.01,
+          "GRAD_CLIP"    : 100,
+          "PRINT_FREQ"   : 5,
+          "NUM_EPOCHS"   : 50,
+          "BATCH_SIZE"   : 256,
+          "NUM_CLUST"    : 3,
           "NUM_FEATURES" : 8}
 
 st = TreebankWordTokenizer()
@@ -64,10 +64,8 @@ def parsepage(url):
     if 'tripadvisor' in url:
         strt = soup.findAll(
             "span", {"class": 'street-address'})[0].get_text().encode('ascii', 'ignore')
-        loc = soup.findAll("span", {"class": 'locality'})[0]
-            .get_text().encode('ascii', 'ignore')
-        count = soup.findAll("span", {"class" : 'country-name'})[0].get_text().encode\
-            ('ascii', 'ignore')
+        loc = soup.findAll("span", {"class": 'locality'})[0].get_text().encode('ascii', 'ignore')
+        count = soup.findAll("span", {"class" : 'country-name'})[0].get_text().encode('ascii', 'ignore')
 
         addr = strt + ', ' + loc + ', ' + count
         print strt, loc, count
@@ -79,7 +77,7 @@ def parsepage(url):
     print "################"
     print pred2
     pred = pred1.intersection(pred2)
-    addresses = sorted(pred, key=lambda x: x[1])
+    addresses = sorted(pred1, key=lambda x: x[1])
     final = accuAddr(addresses)
     print final
     return final
@@ -295,7 +293,7 @@ def predictrnn(parag):
 
     target_values = T.dmatrix('target_output')
     network_output = lasagne.layers.get_output(l_out)
-    all_param_values = np.load('./models/rnnmodel-old.npy')
+    all_param_values = np.load('./models/rnnmodel.npy')
 
     all_params = lasagne.layers.get_all_params(l_out)
     for p, v in zip(all_params, all_param_values):

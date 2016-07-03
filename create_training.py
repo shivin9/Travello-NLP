@@ -214,7 +214,7 @@ def getvec(lines):
             length of paragraph(7)
             has date?(8)
     '''
-    vec = [0] * 8
+    vec = [0] * 9
     for line in lines:
         phnum = len(reph.findall(line))
         nums = len(renum.findall(line))
@@ -242,13 +242,13 @@ def getvec(lines):
         vec[6] = nums
         vec[7] = numterm
 
-        # matches = datefinder.find_dates(line, strict=True)
-        # try:
-        #     for match in matches:
-        #         vec[8] = 1
-        #         break
-        # except:
-        #     pass
+        matches = datefinder.find_dates(line, strict=True)
+        try:
+            for match in matches:
+                vec[8] = 1
+                break
+        except:
+            pass
     return vec
 
 

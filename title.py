@@ -68,10 +68,10 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
 
         jsonoutput = {}
 
-        for i in range(min(len(addresses), len(titles))):
+        for i in range(min(len(addresses[0]), len(titles))):
             jsonoutput[i] = {'Place Name': titles[i],
                              'Write-up'  : "***to_implement*** :(",
-                             'Address'   : str(addresses[i])}
+                             'Address'   : str(addresses[0][i])}
 
         return jsonoutput
 
@@ -85,7 +85,7 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
 
         page_title = page_title[0:i]
         jsonoutput = {}
-        jsonoutput[1] = {'Place Name': page_title,
+        jsonoutput[0] = {'Place Name': page_title,
                          'Write-up'  : "***to_implement*** :(",
                          'Address'   : str(addresses)}
         return jsonoutput
@@ -117,7 +117,7 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
         if len(addresses[0]) <= 3:
             onetitle = getoneheader(soup, out)
             jsonoutput = {}
-            jsonoutput[1] = {'Place Name': onetitle,
+            jsonoutput[0] = {'Place Name': onetitle,
                          'Write-up'  : "***to_implement*** :(",
                          'Address'   : str(addresses[0])}
             return jsonoutput

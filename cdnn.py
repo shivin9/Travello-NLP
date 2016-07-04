@@ -1,7 +1,6 @@
 import numpy as np
 import time
 import sys
-import re
 
 import theano
 import theano.tensor as T
@@ -37,6 +36,7 @@ NUM_FEATURES = 9
 
 WINDOW_SIZE = 5
 
+
 def load_dataset(X, y):
     # y_new = []
 
@@ -53,6 +53,7 @@ def load_dataset(X, y):
     y_val = y[-1000:]
 
     return X_train, y_train, X_val, y_val
+
 
 def log_softmax(x):
     xdev = x - x.max(1, keepdims=True)
@@ -79,6 +80,7 @@ def mlp(input_var = None, depth=2, width=N_HIDDEN, drop_input=.2,
     nonlinlayer = lasagne.nonlinearities.softmax
     network = lasagne.layers.DenseLayer(network, BATCH_SIZE, nonlinearity=nonlinlayer)
     return network
+
 
 def iterate_minibatches(inputs, targets, batchsize=BATCH_SIZE, shuffle=False):
     assert len(inputs) == len(targets)

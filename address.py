@@ -41,10 +41,12 @@ NUM_FEATURES = 9
 params = {"LEARNING_RATE": 0.01,
           "GRAD_CLIP"    : 100,
           "PRINT_FREQ"   : 5,
-          "NUM_EPOCHS"   : 50,
+          "NUM_EPOCHS"   : 10,
           "BATCH_SIZE"   : 256,
           "NUM_CLUST"    : 3,
-          "NUM_FEATURES" : 8}
+          "NUM_FEATURES" : 9,
+          "SEQ_LENGTH"   : 1,
+          "N_HIDDEN"     : 512}
 
 st = TreebankWordTokenizer()
 
@@ -59,9 +61,11 @@ with open('./database/hard_data/countries.json', 'r') as f:
 
 
 def parsepage(url):
-    soup, paras, paradict = parsePage(url)
-
+    soup, paras, _, paradict = parsePage(url)
+    address = []
     if 'tripadvisor' in url:
+        address = TripAdAddr(soup)
+        ## put in new function
         strt = soup.findAll(
             "span", {"class": 'street-address'})[0].get_text().encode('ascii', 'ignore')
         loc = soup.findAll("span", {"class": 'locality'})[0].get_text().encode('ascii', 'ignore')
@@ -114,9 +118,8 @@ def hasdate(address):
         return True
     return False
 
+
 # hierarchical addresses
-
-
 def get_address(text):
     paragraphs = [p.strip() for p in text.split('\n') if len(p.strip()) > 2]
     lens = [len(st.tokenize(p)) for p in paragraphs]
@@ -142,8 +145,6 @@ def get_address(text):
     return possible_addresses
 
 # one line addresses
-
-
 def direct_address(text):
     paragraphs = [p.strip() for p in text.split('\n') if len(p.strip()) > 2]
     lens = [len(st.tokenize(p)) for p in paragraphs]
@@ -224,9 +225,8 @@ def new_address(text):
         idx += 1
     return possible_addresses
 
+
 # use ML techniques to fix the score increments
-
-
 def isAddr(test_addr):
     score = 0
     numterm = 0

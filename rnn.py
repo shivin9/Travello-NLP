@@ -34,9 +34,10 @@ NUM_EPOCHS = 50
 
 # Batch Size
 BATCH_SIZE = 256
+NUM_FEATURES = 9
 
 def gen_data(p, X, y, batch_size=BATCH_SIZE):
-    x = np.zeros((batch_size, SEQ_LENGTH, 8))
+    x = np.zeros((batch_size, SEQ_LENGTH, NUM_FEATURES))
     X = np.array(X)
     y = np.array(y)
     yout = np.zeros((batch_size, SEQ_LENGTH))
@@ -53,7 +54,7 @@ def gen_data(p, X, y, batch_size=BATCH_SIZE):
 
 print "creating layers"
 
-l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, 8))
+l_in = lasagne.layers.InputLayer(shape=(BATCH_SIZE, SEQ_LENGTH, NUM_FEATURES))
 
 l_forward = lasagne.layers.RecurrentLayer(
         l_in, N_HIDDEN, grad_clipping=GRAD_CLIP,
@@ -79,13 +80,13 @@ all_params = lasagne.layers.get_all_params(l_out)
 updates = lasagne.updates.adagrad(cost, all_params, LEARNING_RATE)
 
 print('compiling the network...')
-train = theano.function([l_in.input_var, target_values], cost, updates=updates, allow_input_downcast=True)
+train1 = theano.function([l_in.input_var, target_values], cost, updates=updates, allow_input_downcast=True)
 compute_cost = theano.function([l_in.input_var, target_values], cost, allow_input_downcast=True)
 
 pred = theano.function([l_in.input_var],network_output,allow_input_downcast=True)
 data_size = len(X1)
 
-with open('testdoc', 'r') as f1:
+with open('./database/testdoc', 'r') as f1:
         res = f1.read()
 
 paragraphs = [p.strip() for p in res.split('\n') if len(p.strip()) > 2][:-2]
@@ -140,7 +141,7 @@ def parsepage(url):
 
 def getaddr(url):
     paras = parsepage(url)
-    data = np.zeros((BATCH_SIZE, SEQ_LENGTH, 8))
+    data = np.zeros((BATCH_SIZE, SEQ_LENGTH, NUM_FEATURES))
     for bn in range(BATCH_SIZE):
         for s in range(SEQ_LENGTH):
             if bn*SEQ_LENGTH + s >= len(paras):

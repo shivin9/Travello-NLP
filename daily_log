@@ -55,3 +55,7 @@ Starting title extraction
 30th June:- will do the other tasks on the list instead of the classifier. Completed the JSONify of the aggregated results. Also implemented the image assigning module
 
 1st July! :- will try to restructure the code. make it more like a package so that classifiers can be tested easily later.
+
+2nd July:- cleaning the code only...
+
+3rd July:- Scraped the idea of model class. Predictors working file...

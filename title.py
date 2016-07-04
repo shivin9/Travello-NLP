@@ -16,11 +16,11 @@ def getTitle(soup, paragraphs, paradict, addresses=[[1, 2, 3, 4]]):
 
     # separate method for ladyironchef.com
     if 'ladyironchef' in url:
-        headerIndices = LIC(soup, paradict)
+        headerIndices = LICTitle(soup, paradict)
 
     # trip advisor has only a single place_name/page
     elif 'tripadvisor' in url:
-        headerIndices = TripAd(soup, paradict)
+        headerIndices = TripAdTitle(soup, paradict)
 
     else:
 
@@ -85,7 +85,7 @@ def getTitle(soup, paragraphs, paradict, addresses=[[1, 2, 3, 4]]):
     return headerIndices
 
 
-def LIC(soup, paradict):
+def LICTitle(soup, paradict):
     tags = soup.findAll('span', {"style":"font-size: x-large;"})
     titles = []
 
@@ -105,7 +105,7 @@ def LIC(soup, paradict):
     return [paradict[t] for t in titles]
 
 
-def TripAd(soup, paradict):
+def TripAdTitle(soup, paradict):
     page_title = soup.findAll("title")[0].get_text().encode('ascii', 'ignore')
     for i in range(len(page_title)):
         if page_title[i] in string.punctuation:

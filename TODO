@@ -2,3 +2,5 @@ Fine tune the neural network... it's returning nonsense also right now
 Try HMM and Structures Perceptron :- fails...
 
 try to apply another filter over the output of the Neural Network remove further nonsense.
+
+ML learning techniques will used in conjunction with the hard-coded filters as they also perform well enough

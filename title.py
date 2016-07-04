@@ -1,16 +1,13 @@
 from utils import parsePage, LongParas
-from bs4 import BeautifulSoup
 import numpy as np
-import urllib2
 import string
-import json
-import sys
-import os
 import re
 
 NUM_CLUSTERS = 2
 
-def getTitle(soup, paragraphs, paradict, addresses=[[1, 2, 3, 4]]):
+
+def getTitle(url, addresses=[[1, 2, 3, 4]]):
+    soup, paragraphs, _, paradict = parsePage(url)
     lens = [len(p) for p in paragraphs]
     headerIndices = []
 

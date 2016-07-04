@@ -5,6 +5,7 @@ from fuzzywuzzy import process
 import json
 import re
 
+
 def getStuff(url):
     addresses = parsepage(url)
     fullThing = getTitle(url, addresses)

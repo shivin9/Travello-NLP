@@ -1,14 +1,11 @@
 from fuzzywuzzy import process
-from urlparse import urlparse
 from sklearn.cluster import KMeans
 from bs4 import BeautifulSoup
-from fuzzywuzzy import process
-import multiprocessing
 import numpy as np
-from PIL import Image
 import urllib2
 import json
 import re
+from create_training import getvec
 
 
 # will parse the page only once
@@ -43,7 +40,8 @@ def parsePage(url):
     return soup, paragraphs, images, paradict
 
 
-def consolidateStuff(titles, addresses, images, paradict, paragraphs):
+def consolidateStuff(url, titles, addresses, images):
+    soup, paragraphs, _, paradict = parsePage(url)
     lens = [len(p) for p in paragraphs]
 
     addrs = []
@@ -84,9 +82,6 @@ def LongParas(lens):
 
     # these are the possible paragraphs about the restaurants
     posspara = np.where(labels == reqlabel)[0]
-    print str(len(posspara)) + " paragraphs found"
-    # for posshd in posspara:
-    #     print paras[posshd]
     return posspara
 
 
@@ -120,16 +115,14 @@ def process_url(raw_url):
 
 # get the images first and then join them later... required if parallelized later
 def getImg(url):
-    parse_object = urlparse(url)
-
     opener = urllib2.build_opener()
     opener.addheaders = [
-        ('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
+        ('User-agent',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102\ Chrome/50.0.2661.102 Safari/537.36')]
 
     urlcontent = opener.open(url).read()
     soup = BeautifulSoup(urlcontent, "lxml")
     images = soup.findAll("img")
-    imgurls = re.findall('img .*src="(.*?)"', urlcontent)
 
     collected_images = []
 
@@ -153,3 +146,26 @@ def getImg(url):
         except:
             pass
     return collected_images
+
+
+# Can return the data in required shape
+def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
+    len1 = len(paras)
+    if SEQ_LENGTH:
+        batches = len1 / (BATCH_SIZE * SEQ_LENGTH) + 1
+        data1 = np.zeros((BATCH_SIZE * (batches) * SEQ_LENGTH, NUM_FEATURES))
+        for i in range(len1):
+            data1[i] = np.array(getvec([paras[i]]))
+
+        data = np.zeros((BATCH_SIZE * (batches), SEQ_LENGTH, NUM_FEATURES))
+        for i in range(len(data1)):
+            data[i / SEQ_LENGTH, i % SEQ_LENGTH, :] = data1[i]
+        del(data1)
+
+    else:
+        batches = len1 / BATCH_SIZE + 1
+        data = np.zeros((batches * BATCH_SIZE, NUM_FEATURES))
+        for i in range(len1):
+            data[i / BATCH_SIZE, :] = np.array(getvec([paras[i]]))
+
+    return data

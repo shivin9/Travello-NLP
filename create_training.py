@@ -22,7 +22,8 @@ with open('./database/hard_data/cafes', 'r') as f:
 
 reph = re.compile(
     r'\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}|([0-9]{3,4}[- ]){2}[0-9]{3,4}|[0-9]{10}')
-renum = re.compile(r'[0-9]+')
+
+renum = re.compile(r'(?i)^[a-z0-9][a-z0-9\- ]{4,8}[a-z0-9]$')
 
 garbage = garbage.split('\n')
 garbage = [g for g in garbage if g != '']
@@ -34,8 +35,10 @@ lengths1 = []
 lengths2 = []
 
 summ = 0
+
 for key in streets.keys():
     summ += streets[key]
+
 summ = float(summ) / 20
 
 
@@ -199,7 +202,7 @@ def getvec(lines):
             number of streets(0), cities(1), states(2), countries(3) of current
             sum of weights of the streets(4)
             has phone number?(5)
-            number of numbers(6)
+            zip codes?(6)
             length of paragraph(7)
             has date?(8)
     '''

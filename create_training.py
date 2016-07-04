@@ -20,7 +20,8 @@ with open('./database/hard_data/cafes', 'r') as f:
     cafes = f.read()
 
 
-reph = re.compile(r'\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}|([0-9]{3,4}[- ]){2}[0-9]{3,4}|[0-9]{10}')
+reph = re.compile(
+    r'\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}|([0-9]{3,4}[- ]){2}[0-9]{3,4}|[0-9]{10}')
 renum = re.compile(r'[0-9]+')
 
 garbage = garbage.split('\n')
@@ -35,6 +36,7 @@ lengths2 = []
 summ = 0
 for key in streets.keys():
     summ += streets[key]
+summ = float(summ) / 20
 
 
 def generate_data():
@@ -69,7 +71,8 @@ def generate_data():
         temp.append(addrs[i]['address']['address1'].encode('ascii', 'ignore'))
         cnt += 1
         if rnum > 0.05:
-            temp.append(addrs[i]['address']['city'].encode('ascii', 'ignore')+", "+addrs[i]['address']['state'].encode('ascii', 'ignore')+", "+addrs[i]['address']['postalCode'].encode('ascii', 'ignore'))
+            temp.append(addrs[i]['address']['city'].encode('ascii', 'ignore') + ", " + addrs[i]['address'][
+                        'state'].encode('ascii', 'ignore') + ", " + addrs[i]['address']['postalCode'].encode('ascii', 'ignore'))
             cnt += 1
 
             # dont put phone numbers in all cases as then it will learn that only
@@ -90,7 +93,7 @@ def generate_data():
     data_vec = []
 
     for i in range(len(addresses_train)):
-        if i%100 == 0:
+        if i % 100 == 0:
             print i
         data_vec += getdet(addresses_train[i])
 
@@ -129,7 +132,7 @@ def oneliners():
 
         gnum1 = -1
         gnum2 = -1
-        while gnum1<=0 or gnum2 <= 0:
+        while gnum1 <= 0 or gnum2 <= 0:
             gnum1 = int(random.gauss(10, 5))
             gnum2 = int(random.gauss(10, 5))
 
@@ -149,13 +152,13 @@ def oneliners():
         for od in ordd:
             part = rests['data'][idx][od]
             if part != None:
-                str1+= part.encode("ascii", "ignore")+", "
+                str1 += part.encode("ascii", "ignore") + ", "
         str1 = str1.title()
         temp.append(str1)
         temp += random.sample(garbage, gnum2)
         # print temp
         y1 += [1]
-        y1 += [0]*gnum2
+        y1 += [0] * gnum2
         lengths2.append(len(y1))
         labels2 += y1
         one_line_addrs.append(temp)
@@ -163,7 +166,7 @@ def oneliners():
     data_vec = []
 
     for i in range(len(one_line_addrs)):
-        if i%100 == 0:
+        if i % 100 == 0:
             print i
         data_vec += getdet(one_line_addrs[i])
 
@@ -207,11 +210,11 @@ def getvec(lines):
         numterm = 0
 
         for terms in st.tokenize(line):
-            numterm+=1
+            numterm += 1
             # terms = terms.lower()
             if terms.lower() in streets:
                 vec[0] += 1
-                vec[4] += streets[terms.lower()]/float(summ)
+                vec[4] += streets[terms.lower()] / summ
 
             if terms in states:
                 # state names are biased towards US and Australia addresses
@@ -236,7 +239,6 @@ def getvec(lines):
         except:
             pass
     return vec
-
 
 
 if __name__ == '__main__':

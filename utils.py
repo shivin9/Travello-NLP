@@ -14,7 +14,8 @@ import re
 # will parse the page only once
 def parsePage(url):
     opener = urllib2.build_opener()
-    opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
+    opener.addheaders = [
+        ('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
     response = opener.open(url)
     page = response.read()
     soup = BeautifulSoup(page, 'lxml')
@@ -74,7 +75,7 @@ def consolidateStuff(titles, addresses, images, paradict, paragraphs):
 
 def LongParas(lens):
     res = np.array(lens)
-    res = res.reshape(-1,1)
+    res = res.reshape(-1, 1)
     est = KMeans(n_clusters=2)
     est.fit(res)
     labels = est.labels_
@@ -83,7 +84,7 @@ def LongParas(lens):
 
     # these are the possible paragraphs about the restaurants
     posspara = np.where(labels == reqlabel)[0]
-    print str(len(posspara))+" paragraphs found"
+    print str(len(posspara)) + " paragraphs found"
     # for posshd in posspara:
     #     print paras[posshd]
     return posspara
@@ -93,15 +94,15 @@ def findmin(arr):
     maxx = np.max(arr)
     for i in range(len(arr)):
         if arr[i] < 0:
-            arr[i] = maxx+1
+            arr[i] = maxx + 1
     return np.argmin(arr)
 
 
 def getFull(headers, addresses, possparas):
     out = []
     for header in headers:
-        parapos = findmin(possparas-header)
-        addrpos = findmin(addresses-header)
+        parapos = findmin(possparas - header)
+        addrpos = findmin(addresses - header)
         out.append([header, parapos, addrpos])
     return np.array(out)
 
@@ -122,9 +123,10 @@ def getImg(url):
     parse_object = urlparse(url)
 
     opener = urllib2.build_opener()
-    opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
+    opener.addheaders = [
+        ('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
 
-    urlcontent=opener.open(url).read()
+    urlcontent = opener.open(url).read()
     soup = BeautifulSoup(urlcontent, "lxml")
     images = soup.findAll("img")
     imgurls = re.findall('img .*src="(.*?)"', urlcontent)

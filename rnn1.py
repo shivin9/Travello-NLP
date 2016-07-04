@@ -1,25 +1,16 @@
 from nltk.tokenize import TreebankWordTokenizer
-from nltk.tag import StanfordNERTagger
-from stemming.porter2 import stem
-from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
-import multiprocessing
-import pandas as pd
 import numpy as np
 import urllib2
-import string
-import json
 import sys
-import os
-import re
-
-import numpy as np
 import theano
 import theano.tensor as T
 import lasagne
 import sys
+
 sys.path.insert(0, './database/')
 sys.path.insert(0, './database/features')
+
 from datavec1 import X1
 from datavec2 import X2
 from labels1 import y1
@@ -106,7 +97,6 @@ l_out = lasagne.layers.ReshapeLayer(l_dense, (BATCH_SIZE, SEQ_LENGTH))
 
 target_values = T.dmatrix('target_output')
 
-
 network_output = lasagne.layers.get_output(l_out)
 cost = T.mean((network_output - target_values)**2)
 
@@ -123,6 +113,7 @@ data_size = len(X1)
 
 with open('testdoc', 'r') as f1:
         res = f1.read()
+
 paragraphs = [p.strip() for p in res.split('\n') if len(p.strip()) > 2][:-2]
 out = []
 for p in paragraphs:

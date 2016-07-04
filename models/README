@@ -1,0 +1,2 @@
+RNN with sequence length = 4 is poor
+LSTM is also working fine

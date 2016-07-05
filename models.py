@@ -17,12 +17,12 @@ from labels1 import y1
 from labels2 import y2
 
 
-def getModel(params):
+def getModel(params, filename=None):
     if params['NAME'] == "RNN":
-        predictor = getRNN(params)
+        predictor = getRNN(params, filename)
 
     elif params['NAME'] == "LSTM":
-        predictor = getLSTM(params)
+        predictor = getLSTM(params, filename)
 
     elif params['NAME'] == "RNN+LSTM":
         pass
@@ -40,7 +40,7 @@ def rnn(input_var, params):
     print "creating layers"
 
     l_in = lasagne.layers.InputLayer(shape=(params['BATCH_SIZE'], params[
-            'SEQ_LENGTH'], params['NUM_FEATURES']), input_var=input_var)
+        'SEQ_LENGTH'], params['NUM_FEATURES']), input_var=input_var)
 
     l_forward = lasagne.layers.RecurrentLayer(
         l_in, params['N_HIDDEN'], grad_clipping=params['GRAD_CLIP'],
@@ -106,21 +106,7 @@ def lstm(input_var, params):
     return l_out
 
 
-def train(params):
-    if params['NAME'] == "rnn":
-        pass
-
-    elif params['NAME'] == "lstm":
-        pass
-
-    elif params['NAME'] == "rnn+lstm":
-        pass
-
-    elif params['NAME'] == "rnnboost":
-        pass
-
-
-def getRNN(params):
+def getRNN(params, filename=None):
 
     print "loading data..."
     X_train1, y_train1, X_val1, y_val1 = _load_dataset(X1, y1)
@@ -139,9 +125,9 @@ def getRNN(params):
     pred = theano.function([input_var], network_output,
                            allow_input_downcast=True)
 
-    if "LOAD" in params:
+    if filename:
         print "Loading a previously saved model..."
-        all_param_values = np.load('./models/' + params['LOAD'] + '.npy')
+        all_param_values = np.load("./models/" + filename + '.npy')
 
         all_params = lasagne.layers.get_all_params(l_out)
         for p, v in zip(all_params, all_param_values):
@@ -153,7 +139,7 @@ def getRNN(params):
         train = theano.function([input_var, target_values],
                                 cost, updates=updates, allow_input_downcast=True)
         validate = theano.function(
-        [input_var, target_values], cost, allow_input_downcast=True)
+            [input_var, target_values], cost, allow_input_downcast=True)
 
         old_valerr = [10, 10]
 
@@ -200,7 +186,8 @@ def getRNN(params):
             # print("  validation accuracy:\t\t{:.2f} %".format(val_acc/val_batches * 100))
 
             # to prevent overfitting
-            if val_err - old_valerr[0] > 0.03:# or val_err - old_valerr[0] < 0.001:
+            # or val_err - old_valerr[0] < 0.001:
+            if val_err - old_valerr[0] > 0.03 or old_valerr[0] - val_err < 0.001:
                 print "overfitting or model reached saturation...\n"
                 print old_valerr
                 network_output = old_netout
@@ -236,7 +223,7 @@ def getRNN(params):
     return pred
 
 
-def getLSTM(params):
+def getLSTM(params, filename):
 
     print "loading data..."
     X_train1, y_train1, X_val1, y_val1 = _load_dataset(X1, y1)
@@ -256,13 +243,13 @@ def getLSTM(params):
     pred = theano.function([input_var], network_output,
                            allow_input_downcast=True)
 
-    if "LOAD" in params:
-            print "Loading a previously saved model..."
-            all_param_values = np.load('./models/' + params['LOAD'] + '.npy')
+    if filename:
+        print "Loading a previously saved model..."
+        all_param_values = np.load("./models/" + filename + '.npy')
 
-            all_params = lasagne.layers.get_all_params(l_out)
-            for p, v in zip(all_params, all_param_values):
-                p.set_value(v)
+        all_params = lasagne.layers.get_all_params(l_out)
+        for p, v in zip(all_params, all_param_values):
+            p.set_value(v)
 
     else:
 
@@ -271,7 +258,7 @@ def getLSTM(params):
         train = theano.function([input_var, target_values],
                                 cost, updates=updates, allow_input_downcast=True)
         validate = theano.function(
-        [input_var, target_values], cost, allow_input_downcast=True)
+            [input_var, target_values], cost, allow_input_downcast=True)
 
         old_valerr = [10, 10]
 
@@ -318,7 +305,8 @@ def getLSTM(params):
             # print("  validation accuracy:\t\t{:.2f} %".format(val_acc/val_batches * 100))
 
             # to prevent overfitting
-            if val_err - old_valerr[0] > 0.03:# or val_err - old_valerr[0] < 0.001:
+            # or val_err - old_valerr[0] < 0.001:
+            if val_err - old_valerr[0] > 0.03 or old_valerr[0] - val_err < 0.001:
                 print "overfitting or model reached saturation...\n"
                 print old_valerr
                 network_output = old_netout
@@ -352,7 +340,6 @@ def getLSTM(params):
         np.save("./models/" + str(params), all_param_values)
 
     return pred
-
 
 
 def getlstm():
@@ -379,7 +366,7 @@ def get_address(paragraphs):
             # to collect lines above the phone number
             poss = []
             poss.append((paragraphs[idx], idx))
-            temp=idx - 1
+            temp = idx - 1
             while lens[temp] <= 9:
                 poss.append((paragraphs[temp].encode("ascii"), temp))
                 temp -= 1
@@ -408,7 +395,7 @@ def _load_dataset(X, y):
 
 
 def iterate_minibatches(inputs, targets, batchsize, SEQ_LENGTH=None,
- shuffle=False):
+                        shuffle=False):
     assert len(inputs) == len(targets)
     num_feat = inputs.shape[1]
     if SEQ_LENGTH:

@@ -6,4 +6,6 @@ try to apply another filter over the output of the Neural Network remove further
 ML learning techniques will used in conjunction with the hard-coded filters as they also perform well enough
 
 Standardize the data... Also complexity can be added
-Instead... dataset needs to be improved. Need more variety
+Instead... dataset needs to be improved. Need more variety. It needs to be made more singapore sensitive
+
+Sequencing feature is still not coming...

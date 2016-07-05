@@ -118,7 +118,7 @@ def getImg(url):
     opener = urllib2.build_opener()
     opener.addheaders = [
         ('User-agent',
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102\ Chrome/50.0.2661.102 Safari/537.36')]
+         'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102\ Chrome/50.0.2661.102 Safari/537.36')]
 
     urlcontent = opener.open(url).read()
     soup = BeautifulSoup(urlcontent, "lxml")
@@ -155,7 +155,7 @@ def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
         batches = len1 / (BATCH_SIZE * SEQ_LENGTH) + 1
         data1 = np.zeros((BATCH_SIZE * (batches) * SEQ_LENGTH, NUM_FEATURES))
         for i in range(len1):
-            data1[i] = np.array(getvec([paras[i]]))
+            data1[i] = np.array(getvec([paras[i]]))[:NUM_FEATURES]
 
         data = np.zeros((BATCH_SIZE * (batches), SEQ_LENGTH, NUM_FEATURES))
         for i in range(len(data1)):
@@ -166,6 +166,17 @@ def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
         batches = len1 / BATCH_SIZE + 1
         data = np.zeros((batches * BATCH_SIZE, NUM_FEATURES))
         for i in range(len1):
-            data[i / BATCH_SIZE, :] = np.array(getvec([paras[i]]))
+            data[i / BATCH_SIZE, :] = np.array(getvec([paras[i]]))[:NUM_FEATURES]
 
     return data
+
+
+def getScores(pred, paras, params):
+    X = getData(paras, params['NUM_FEATURES'], params[
+                'BATCH_SIZE'], SEQ_LENGTH=params['SEQ_LENGTH'])
+
+    res = pred(X).flatten()
+    out = []
+    for i in range(len(paras)):
+        out.append((paras[i], res[i]))
+    return out

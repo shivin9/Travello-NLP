@@ -4,12 +4,9 @@ from bs4 import BeautifulSoup
 import theano.tensor as T
 import numpy as np
 import datefinder
-import lasagne
-import theano
 import json
 import sys
 import re
-from create_training import getvec
 from utils import parsePage, getData
 
 sys.path.insert(0, './database/')
@@ -36,7 +33,7 @@ def getAddress(url, predictors, params):
                 'BATCH_SIZE'], SEQ_LENGTH=params['SEQ_LENGTH'])
 
     if 'tripadvisor' in url:
-        addresses = TripAdAddr(soup)
+        final = TripAdAddr(soup)
 
     else:
         results = set()
@@ -46,8 +43,8 @@ def getAddress(url, predictors, params):
             results = results.union(getLabels(res, paras, params['NUM_CLUST']))
 
         addresses = sorted(results, key=lambda x: x[1])
-
-    final = accuAddr(addresses)
+        print addresses
+        final = accuAddr(addresses)
     print final
     return final
     # raw = soup.get_text().encode('ascii', 'ignore')
@@ -68,8 +65,7 @@ def TripAdAddr(soup):
     count = soup.findAll(
         "span", {"class": 'country-name'})[0].get_text().encode('ascii', 'ignore')
 
-    print strt, loc, count
-    return [[[strt, loc, count]]]
+    return [[strt, loc, count]]
 
 
 def accuAddr(addresses):
@@ -83,7 +79,7 @@ def accuAddr(addresses):
         # if not hasdate(accued):
         final += [accued]
         i += 1
-    return [final]
+    return final
 
 
 # function for removing dates from addresses

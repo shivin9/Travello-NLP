@@ -39,7 +39,7 @@ summ = 0
 for key in streets.keys():
     summ += streets[key]
 
-summ = float(summ) / 20
+summ = float(summ) / 5
 
 
 def generate_data():
@@ -232,7 +232,7 @@ def getvec(lines):
 
         vec[5] = phnum
         vec[6] = nums
-        vec[7] = numterm
+        vec[7] = 10 / float(numterm)
 
         matches = datefinder.find_dates(line, strict=True)
         try:

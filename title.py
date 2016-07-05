@@ -108,7 +108,7 @@ def TripAdTitle(soup, paradict):
         if page_title[i] in string.punctuation:
             break
 
-    page_title = [page_title[0:i]]
+    page_title = page_title[0:i]
     return [paradict[page_title]]
 
 

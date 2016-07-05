@@ -1,18 +1,7 @@
 from nltk.tokenize import TreebankWordTokenizer
-from nltk.tag import StanfordNERTagger
-from stemming.porter2 import stem
-from nltk.corpus import stopwords
-from bs4 import BeautifulSoup
-import multiprocessing
-import pandas as pd
-import numpy as np
 import datefinder
-import string
-import urllib
 import random
 import json
-import sys
-import os
 import re
 
 st = TreebankWordTokenizer()
@@ -31,8 +20,10 @@ with open('./database/hard_data/cafes', 'r') as f:
     cafes = f.read()
 
 
-reph = re.compile(r'\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}|([0-9]{3,4}[- ]){2}[0-9]{3,4}|[0-9]{10}')
-renum = re.compile(r'[0-9]+')
+reph = re.compile(
+    r'\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}|([0-9]{3,4}[- ]){2}[0-9]{3,4}|[0-9]{10}')
+
+renum = re.compile(r'(?i)^[a-z0-9][a-z0-9\- ]{4,8}[a-z0-9]$')
 
 garbage = garbage.split('\n')
 garbage = [g for g in garbage if g != '']
@@ -40,16 +31,19 @@ garbage = [g for g in garbage if g != '']
 cafes = cafes.split('\n')
 cafes = [c for c in cafes if c != '']
 
-labels1 = []
-labels2 = []
 lengths1 = []
 lengths2 = []
 
 summ = 0
+
 for key in streets.keys():
     summ += streets[key]
 
+summ = float(summ) / 5
+
+
 def generate_data():
+    labels1 = []
     with open('./database/hard_data/walmart-full.json') as addrs:
         addrs = json.load(addrs)
 
@@ -61,6 +55,7 @@ def generate_data():
         cnt = 0
         rnum = random.random()
         gnum1 = -1
+        gnum2 = -1
         # for selecting the number of garbage texts above and below the address
         while gnum1 < 0 or gnum2 < 0:
             gnum1 = int(random.gauss(10, 5))
@@ -68,7 +63,7 @@ def generate_data():
         # gnum1 = 0
         # gnum2 = 0
         temp += random.sample(garbage, gnum1)
-        y += [0]*gnum1
+        y += [0] * gnum1
 
         # probabilistically append the restaurant name
         if rnum > 0.6:
@@ -79,17 +74,18 @@ def generate_data():
         temp.append(addrs[i]['address']['address1'].encode('ascii', 'ignore'))
         cnt += 1
         if rnum > 0.05:
-            temp.append(addrs[i]['address']['city'].encode('ascii', 'ignore')+", "+addrs[i]['address']['state'].encode('ascii', 'ignore')+", "+addrs[i]['address']['postalCode'].encode('ascii', 'ignore'))
+            temp.append(addrs[i]['address']['city'].encode('ascii', 'ignore') + ", " + addrs[i]['address'][
+                        'state'].encode('ascii', 'ignore') + ", " + addrs[i]['address']['postalCode'].encode('ascii', 'ignore'))
             cnt += 1
 
             # dont put phone numbers in all cases as then it will learn that only
             if rnum > 0.6 and 'phone' in addrs[i]:
                 temp.append(addrs[i]['phone'].encode('ascii', 'ignore'))
                 cnt += 1
-        y += [1]*cnt
+        y += [1] * cnt
         temp += random.sample(garbage, gnum2)
-        y += [0]*gnum2
-        labels1.append(y)
+        y += [0] * gnum2
+        labels1 += y
         lengths1.append(len(y))
 
         # for i in range(len(y)):
@@ -100,26 +96,22 @@ def generate_data():
     data_vec = []
 
     for i in range(len(addresses_train)):
-        for para in addresses_train[i]:
-            data_vec.append(getvec([para]))
-
-    newy = []
-    for file in labels1:
-        for para in file:
-            newy.append(para)
-
+        if i % 100 == 0:
+            print i
+        data_vec += getdet(addresses_train[i])
 
     with open("./database/features/train1", "w") as f:
         print >> f, addresses_train
 
     with open("./database/features/labels1.py", "w") as f1:
-        print >> f1, newy
+        print >> f1, labels1
 
     with open("./database/features/lenghts1.py", "w") as f1:
         print >> f1, lengths1
 
     with open("./database/features/datavec1.py", "w") as f2:
         print >> f2, data_vec
+
 
 def oneliners():
     with open('./database/hard_data/us_rest1.json') as rests:
@@ -130,6 +122,7 @@ def oneliners():
     one_line_addrs = []
     idx = 0
     order = [9, 11, 12, 13, 14]
+    labels2 = []
 
     # for selecting the number of garbage texts above and below the address
 
@@ -141,7 +134,8 @@ def oneliners():
         rnum = random.random()
 
         gnum1 = -1
-        while gnum1<=0 or gnum2 <= 0:
+        gnum2 = -1
+        while gnum1 <= 0 or gnum2 <= 0:
             gnum1 = int(random.gauss(10, 5))
             gnum2 = int(random.gauss(10, 5))
 
@@ -150,7 +144,7 @@ def oneliners():
             y1 += [1]
 
         temp += random.sample(garbage, gnum1)
-        y1 += [0]*gnum1
+        y1 += [0] * gnum1
         ordd = order
 
         if rnum < 0.5:
@@ -161,39 +155,36 @@ def oneliners():
         for od in ordd:
             part = rests['data'][idx][od]
             if part != None:
-                str1+= part.encode("ascii", "ignore")+", "
+                str1 += part.encode("ascii", "ignore") + ", "
         str1 = str1.title()
         temp.append(str1)
         temp += random.sample(garbage, gnum2)
         # print temp
         y1 += [1]
-        y1 += [0]*gnum2
+        y1 += [0] * gnum2
         lengths2.append(len(y1))
-        labels2.append(y1)
+        labels2 += y1
         one_line_addrs.append(temp)
 
     data_vec = []
 
     for i in range(len(one_line_addrs)):
-        for para in one_line_addrs[i]:
-            data_vec.append(getvec([para]))
-
-    newy = []
-    for file in labels2:
-        for para in file:
-            newy.append(para)
+        if i % 100 == 0:
+            print i
+        data_vec += getdet(one_line_addrs[i])
 
     with open("./database/features/train2", "w") as f:
         print >> f, one_line_addrs
 
     with open("./database/features/labels2.py", "w") as f1:
-        print >> f1, newy
+        print >> f1, labels2
 
     with open("./database/features/lengths2.py", "w") as f1:
         print >> f1, lengths2
 
     with open("./database/features/datavec2.py", "w") as f2:
         print >> f2, data_vec
+
 
 # changed to remove sliding window approach
 def getdet(data):
@@ -204,28 +195,29 @@ def getdet(data):
         feature_vec.append(getvec([data[i]]))
     return feature_vec
 
+
 def getvec(lines):
     '''
         features:
             number of streets(0), cities(1), states(2), countries(3) of current
             sum of weights of the streets(4)
             has phone number?(5)
-            number of numbers(6)
+            zip codes?(6)
             length of paragraph(7)
             has date?(8)
     '''
-    vec = [0]*8
+    vec = [0] * 9
     for line in lines:
         phnum = len(reph.findall(line))
         nums = len(renum.findall(line))
         numterm = 0
 
         for terms in st.tokenize(line):
-            numterm+=1
+            numterm += 1
             # terms = terms.lower()
             if terms.lower() in streets:
                 vec[0] += 1
-                vec[4] += streets[terms.lower()]/float(summ)
+                vec[4] += streets[terms.lower()] / summ
 
             if terms in states:
                 # state names are biased towards US and Australia addresses
@@ -240,17 +232,16 @@ def getvec(lines):
 
         vec[5] = phnum
         vec[6] = nums
-        vec[7] = numterm
+        vec[7] = 10 / float(numterm)
 
-        # matches = datefinder.find_dates(line, strict=True)
-        # try:
-        #     for match in matches:
-        #         vec[8] = 1
-        #         break
-        # except:
-        #     pass
+        matches = datefinder.find_dates(line, strict=True)
+        try:
+            for match in matches:
+                vec[8] = 1
+                break
+        except:
+            pass
     return vec
-
 
 
 if __name__ == '__main__':

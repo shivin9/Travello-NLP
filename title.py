@@ -1,119 +1,33 @@
-from nltk.tokenize import TreebankWordTokenizer
-from nltk.tag import StanfordNERTagger
-from sklearn.cluster import KMeans
-from stemming.porter2 import stem
-from nltk.corpus import stopwords
-from bs4 import BeautifulSoup
-import multiprocessing
+from utils import parsePage, LongParas
 import numpy as np
-import urllib2
 import string
-import json
-import sys
-import os
 import re
 
 NUM_CLUSTERS = 2
 
-stagger = StanfordNERTagger('/home/shivin/Documents/Travello-NLP/stanford-ner/classifiers/english.all.3class.distsim.crf.ser.gz', '/home/shivin/Documents/Travello-NLP/stanford-ner/stanford-ner.jar', encoding='utf-8')
-
-st = TreebankWordTokenizer()
 
 def getTitle(url, addresses=[[1, 2, 3, 4]]):
-    opener = urllib2.build_opener()
-    opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
-    response = opener.open(url)
-    page = response.read()
-    soup = BeautifulSoup(page, 'lxml')
-
-    for elem in soup.findAll(['script', 'style']):
-        elem.extract()
-
-    out = set()
-
-    raw = soup.get_text().encode('ascii', 'ignore')
-    paras = []
-
-    for p in raw.split('\n'):
-        p = p.strip()
-        if len(p)>2:
-            p = p.replace('\t', '')
-            p = p.replace('\n', '')
-            paras.append(p)
-
-    lens = [len(st.tokenize(p)) for p in paras]
-
-    paradict = {}
-    for i in range(len(paras)):
-        if paras[i] not in paradict:
-            paradict[paras[i]] = i
+    soup, paragraphs, _, paradict = parsePage(url)
+    lens = [len(p) for p in paragraphs]
+    headerIndices = []
 
     # separate method for ladyironchef.com
     if 'ladyironchef' in url:
-        tags = soup.findAll('span', {"style":"font-size: x-large;"})
-        titles = []
-
-        for tag in tags:
-            name = tag.get_text().encode('ascii', 'ignore')
-            titles.append(name)
-
-        if len(titles) == 0:
-            text = soup.findAll(re.compile('strong'))
-            for title in text:
-                str1 = title.get_text().encode('ascii', 'ignore')
-                str1 = str1.replace('\t', '')
-                str1 = str1.replace('\n', '')
-            if len(str1) > 2:
-                titles.append(str1)
-
-        jsonoutput = {}
-
-        for i in range(min(len(addresses[0]), len(titles))):
-            jsonoutput[i] = {'Place Name': titles[i],
-                             'Write-up'  : "***to_implement*** :(",
-                             'Address'   : str(addresses[0][i])}
-
-        return jsonoutput
+        headerIndices = LICTitle(soup, paradict)
 
     # trip advisor has only a single place_name/page
     elif 'tripadvisor' in url:
-        page_title = soup.findAll("title")[0].get_text().encode('ascii', 'ignore')
-
-        for i in range(len(page_title)):
-            if page_title[i] in string.punctuation:
-                break
-
-        page_title = page_title[0:i]
-        jsonoutput = {}
-        jsonoutput[0] = {'Place Name': page_title,
-                         'Write-up'  : "***to_implement*** :(",
-                         'Address'   : str(addresses)}
-        return jsonoutput
+        headerIndices = TripAdTitle(soup, paradict)
 
     else:
-
         # in a few rare cases the title of page can be under <Hn> inside the page also
         # header_titles = [soup.findAll('h'+str(i)) for i in range(1, 5)]
         # header_titles.append(soup.findAll('strong'))
-        text = soup.findAll(re.compile('h[0-5]|strong'))
-        possheaders = set()
-        # to select the elements which have the maximum number of common tags-- failed idea
-        # strip the string of waste space from the sides
-
-        for title in text:
-            str1 = title.get_text().encode('ascii', 'ignore')
-            str1 = str1.replace('\t', '')
-            str1 = str1.replace('\n', '')
-            str1 = str1.strip()
-            if len(str1) > 2 and (not onlyNumbers(str1)) and str1 in paradict:
-                out.add(str1)
-                possheaders.add(paradict[str1])
-
-        possheaders = sorted(list(possheaders))
-        # print possheaders
-
+        possibleHeaders = GenPage(soup, paradict)
         # this implies that most probably page is a multi-place blog
         # print addresses
+
+        ''' **to be checked**
         if len(addresses[0]) <= 3:
             onetitle = getoneheader(soup, out)
             jsonoutput = {}
@@ -121,33 +35,19 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
                          'Write-up'  : "***to_implement*** :(",
                          'Address'   : str(addresses[0])}
             return jsonoutput
-
-        out = list(out)
-        out = sorted(out, key=lambda x: paradict[x])
+        '''
 
         # get the long write-ups about the headings
-        res = np.array(lens)
-        res = res.reshape(-1,1)
-        est = KMeans(n_clusters = 2)
-        est.fit(res)
-        labels = est.labels_
-        bestpara = np.argmax(res)
-        reqlabel = labels[bestpara]
-
-        # these are the possible paragraphs about the restaurants
-        posspara = np.where(labels == reqlabel)[0]
-        print str(len(posspara))+" paragraphs found"
-
-        # for posshd in posspara:
-        #     print paras[posshd]
+        posspara = LongParas(lens)
 
         # generate indices for addresses, they are the first line of address
         addrs = []
+        # the head of addresses
         for address in addresses[0]:
             addrs.append(paradict[address[0]])
-
         addrs = np.array(addrs)
-        features = getHeadFeatures(possheaders, addrs, posspara)
+
+        features = getHeadFeatures(possibleHeaders, addrs, posspara)
         reqindices = np.where(features > 0)[0]
 
         '''
@@ -175,51 +75,71 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
         reqindices = np.where(labels==reqlabel)[0]
         print reqindices'''
 
-        finalout = []
         for idx in reqindices:
-            print out[idx]
-            finalout.append(out[idx])
+            headerIndices.append(possibleHeaders[idx])
 
-        newindices = []
-        for idx in reqindices:
-            newindices.append(paradict[out[idx]])
-
-        fullThing = getFull(newindices, addrs, posspara)
-
-        jsonoutput = {}
-
-        for i in range(len(fullThing)):
-            onething = fullThing[i]
-            jsonoutput[i] = {'Place Name': paras[onething[0]],
-                             'Write-up'  : paras[posspara[onething[1]]],
-                             'Address'   : addresses[0][onething[2]]
-                            }
-        return jsonoutput
+    return headerIndices
 
 
-def findmin(arr):
-    maxx = np.max(arr)
-    for i in range(len(arr)):
-        if arr[i] < 0:
-            arr[i] = maxx+1
-    return np.argmin(arr)
+def LICTitle(soup, paradict):
+    tags = soup.findAll('span', {"style":"font-size: x-large;"})
+    titles = []
+
+    for tag in tags:
+        name = tag.get_text().encode('ascii', 'ignore')
+        titles.append(name)
+
+    if len(titles) == 0:
+        text = soup.findAll(re.compile('strong'))
+        for title in text:
+            str1 = title.get_text().encode('ascii', 'ignore')
+            str1 = str1.replace('\t', '')
+            str1 = str1.replace('\n', '')
+        if len(str1) > 2:
+            titles.append(str1)
+
+    return [paradict[t] for t in titles]
+
+
+def TripAdTitle(soup, paradict):
+    page_title = soup.findAll("title")[0].get_text().encode('ascii', 'ignore')
+    for i in range(len(page_title)):
+        if page_title[i] in string.punctuation:
+            break
+
+    page_title = page_title[0:i]
+    return [paradict[page_title]]
+
+
+def GenPage(soup, paradict):
+    headings = soup.findAll(re.compile('h[0-5]|strong'))
+    possheaders = set()
+    # to select the elements which have the maximum number of common tags-- failed idea
+    # strip the string of waste space from the sides
+
+    for title in headings:
+        head = title.get_text().encode('ascii', 'ignore')
+        head = head.replace('\t', '')
+        head = head.replace('\n', '')
+        head = head.strip()
+        if len(head) > 2 and (not onlyNumbers(head)) and head in paradict:
+            possheaders.add(paradict[head])
+
+    possheaders = sorted(list(possheaders))
+    return possheaders
 
 
 def getHeadFeatures(headers, addresses, possparas):
+    '''
+        headers: the indices of the possible headers on the page
+        addresses: the indices of the first line of address on the page
+        posspara: the indices of the long paragraphs/write-ups on the page
+    '''
     out = []
     for header in headers:
         distpara = min(possparas-header, key=lambda x: x if x>0 else float('inf'))
         distaddr = min(addresses-header, key=lambda x: x if x>0 else float('inf'))
         out.append(distpara+distaddr)
-    return np.array(out)
-
-
-def getFull(headers, addresses, possparas):
-    out = []
-    for header in headers:
-        parapos = findmin(possparas-header)
-        addrpos = findmin(addresses-header)
-        out.append([header, parapos, addrpos])
     return np.array(out)
 
 
@@ -231,6 +151,7 @@ def onlyNumbers(teststr):
     return False
 
 
+# work on this... decide which header to return
 def getoneheader(soup, out):
     page_title = soup.select("title")[0].get_text().encode('ascii', 'ignore').strip()
     bkpt = 0

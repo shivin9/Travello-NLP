@@ -62,3 +62,7 @@ Starting title extraction
 
 4th July:- will try to wind up the code refactoring branch and merge in master.
 Changed the weights of the streets... 1000 is too much
+
+5th July:- Integrated the whole thing with the extension... Playing around with the dataset and classifier
+
+6th July:- Removing the number of streets feature as I think it is the one which is causing problems. Will try CNN and Deep Belief Neural Networks

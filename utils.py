@@ -36,12 +36,11 @@ def parsePage(url):
         if paragraphs[i] not in paradict:
             paradict[paragraphs[i]] = i
 
-    images = getImg(url)
-    return soup, paragraphs, images, paradict
+    return soup, paragraphs, paradict
 
 
 def consolidateStuff(url, titles, addresses, images):
-    soup, paragraphs, _, paradict = parsePage(url)
+    soup, paragraphs, paradict = parsePage(url)
     lens = [len(p) for p in paragraphs]
 
     addrs = []
@@ -68,7 +67,7 @@ def consolidateStuff(url, titles, addresses, images):
         imgurls = re.findall('img .*src="(.*?)"', rightImage[0])
         jsonoutput[i]['Image URL'] = imgurls[0]
     # print jsonoutput
-    return json.dumps(jsonoutput)
+    return json.dumps(jsonoutput, indent=4)
 
 
 def LongParas(lens):

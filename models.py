@@ -144,13 +144,14 @@ def getRNN(params, filename=None):
         old_valerr = [10, 10]
 
         for epoch in range(params['NUM_EPOCHS']):
+            print "Training the network..."
             train_err = 0
             train_batches = 0
-            old_netout = network_output
+            old_netout = l_out
             start_time = time.time()
 
             for batch in iterate_minibatches(X_train1, y_train1, params['BATCH_SIZE'],
-                                             params['SEQ_LENGTH'], shuffle=False):
+                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
                 # if train_batches % 50 == 0:
                 #     print "batch number " + str(train_batches)
                 inputs, targets = batch
@@ -158,7 +159,7 @@ def getRNN(params, filename=None):
                 train_batches += 1
 
             for batch in iterate_minibatches(X_train2, y_train2, params['BATCH_SIZE'],
-                                             params['SEQ_LENGTH'], shuffle=False):
+                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
                 # if train_batches % 50 == 0:
                 #     print "batch number " + str(train_batches)
                 inputs, targets = batch
@@ -171,7 +172,7 @@ def getRNN(params, filename=None):
             val_batches = 0
 
             for batch in iterate_minibatches(X_val1, y_val1, params['BATCH_SIZE'],
-                                             params['SEQ_LENGTH'], shuffle=False):
+                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
                 inputs, targets = batch
                 err = validate(inputs, targets)
                 val_err += err
@@ -187,21 +188,21 @@ def getRNN(params, filename=None):
 
             # to prevent overfitting
             # or val_err - old_valerr[0] < 0.001:
-            if val_err - old_valerr[0] > 0.03 or old_valerr[0] - val_err < 0.001:
+            if val_err - old_valerr[0] > 0.03:# or old_valerr[0] - val_err < 0.001:
                 print "overfitting or model reached saturation...\n"
                 print old_valerr
-                network_output = old_netout
+                l_out = old_netout
                 break
 
-            old_netout = network_output
+            old_netout = l_out
             old_valerr[0] = val_err
 
             val_err = 0
             val_acc = 0
             val_batches = 0
 
-            for batch in iterate_minibatches(X_val2, y_val2, params['BATCH_SIZE'],
-                                             params['SEQ_LENGTH'], shuffle=False):
+            for batch in iterate_minibatches(X_val1, y_val1, params['BATCH_SIZE'],
+                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
                 inputs, targets = batch
                 err = validate(inputs, targets)
                 val_err += err
@@ -263,21 +264,22 @@ def getLSTM(params, filename):
         old_valerr = [10, 10]
 
         for epoch in range(params['NUM_EPOCHS']):
+            print "Training the network..."
             train_err = 0
             train_batches = 0
-            old_netout = network_output
+            old_netout = l_out
             start_time = time.time()
 
             for batch in iterate_minibatches(X_train1, y_train1, params['BATCH_SIZE'],
-                                             params['SEQ_LENGTH'], shuffle=False):
+                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
                 # if train_batches % 50 == 0:
                 #     print "batch number " + str(train_batches)
                 inputs, targets = batch
                 train_err += train(inputs, targets)
                 train_batches += 1
 
-            for batch in iterate_minibatches(X_train2, y_train2, params['BATCH_SIZE'],
-                                             params['SEQ_LENGTH'], shuffle=False):
+            for batch in iterate_minibatches(X_train1, y_train1, params['BATCH_SIZE'],
+                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
                 # if train_batches % 50 == 0:
                 #     print "batch number " + str(train_batches)
                 inputs, targets = batch
@@ -290,7 +292,7 @@ def getLSTM(params, filename):
             val_batches = 0
 
             for batch in iterate_minibatches(X_val1, y_val1, params['BATCH_SIZE'],
-                                             params['SEQ_LENGTH'], shuffle=False):
+                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
                 inputs, targets = batch
                 err = validate(inputs, targets)
                 val_err += err
@@ -306,13 +308,13 @@ def getLSTM(params, filename):
 
             # to prevent overfitting
             # or val_err - old_valerr[0] < 0.001:
-            if val_err - old_valerr[0] > 0.03 or old_valerr[0] - val_err < 0.001:
+            if val_err - old_valerr[0] > 0.03: #or old_valerr[0] - val_err < 0.001:
                 print "overfitting or model reached saturation...\n"
                 print old_valerr
-                network_output = old_netout
+                l_out = old_netout
                 break
 
-            old_netout = network_output
+            old_netout = l_out
             old_valerr[0] = val_err
 
             val_err = 0
@@ -320,7 +322,7 @@ def getLSTM(params, filename):
             val_batches = 0
 
             for batch in iterate_minibatches(X_val2, y_val2, params['BATCH_SIZE'],
-                                             params['SEQ_LENGTH'], shuffle=False):
+                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
                 inputs, targets = batch
                 err = validate(inputs, targets)
                 val_err += err
@@ -394,17 +396,17 @@ def _load_dataset(X, y):
     return X_train, y_train, X_val, y_val
 
 
-def iterate_minibatches(inputs, targets, batchsize, SEQ_LENGTH=None,
+def iterate_minibatches(inputs, targets, batchsize, NUM_FEATURES, SEQ_LENGTH=None,
                         shuffle=False):
     assert len(inputs) == len(targets)
-    num_feat = inputs.shape[1]
+    num_feat = NUM_FEATURES
     if SEQ_LENGTH:
         batches = len(inputs) / (batchsize * SEQ_LENGTH) + 1
         X = np.zeros((batchsize * (batches), SEQ_LENGTH, num_feat))
         y = np.zeros((batchsize * (batches), SEQ_LENGTH))
 
         for i in range(len(inputs)):
-            X[i / SEQ_LENGTH, i % SEQ_LENGTH, :] = inputs[i]
+            X[i / SEQ_LENGTH, i % SEQ_LENGTH, :] = inputs[i][:num_feat]
             y[i / SEQ_LENGTH, i % SEQ_LENGTH] = targets[i]
 
         for i in range(batches):

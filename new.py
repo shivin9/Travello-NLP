@@ -29,7 +29,6 @@ def json_data():
     titles = getTitle(url, addresses)
     images = getImg(url)
     str_to_return = consolidateStuff(url, titles, addresses, images)
-    print str_to_return
     return str_to_return
 
 if __name__ == '__main__':

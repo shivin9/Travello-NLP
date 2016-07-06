@@ -1,7 +1,5 @@
 from nltk.tokenize import TreebankWordTokenizer
 from sklearn.cluster import KMeans
-from bs4 import BeautifulSoup
-import theano.tensor as T
 import numpy as np
 import datefinder
 import json
@@ -22,23 +20,23 @@ with open('./database/hard_data/countries.json', 'r') as f:
     countries = json.load(f)
 
 
-def getAddress(url, predictors, params):
+def getAddress(url, predictors):
     '''
         predictors: it's a list of prediction
         functions like RNN, LSTM BoostedRNN etc.
     '''
-    soup, paras, _, paradict = parsePage(url)
+    soup, paras, paradict = parsePage(url)
     addresses = []
-    X = getData(paras, params['NUM_FEATURES'], params[
-                'BATCH_SIZE'], SEQ_LENGTH=params['SEQ_LENGTH'])
 
     if 'tripadvisor' in url:
         final = TripAdAddr(soup)
 
     else:
         results = set()
-        for pred in predictors:
+        for params, pred in predictors:
             # pred(X, paras) for RULE based classifier
+            X = getData(paras, params['NUM_FEATURES'], params[
+                'BATCH_SIZE'], SEQ_LENGTH=params['SEQ_LENGTH'])
             res = pred(X).flatten()
             results = results.union(getLabels(res, paras, params['NUM_CLUST']))
 

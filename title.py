@@ -7,7 +7,7 @@ NUM_CLUSTERS = 2
 
 
 def getTitle(url, addresses=[[1, 2, 3, 4]]):
-    soup, paragraphs, _, paradict = parsePage(url)
+    soup, paragraphs, paradict = parsePage(url)
     lens = [len(p) for p in paragraphs]
     headerIndices = []
 

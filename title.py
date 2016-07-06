@@ -44,7 +44,7 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
         addrs = []
         # the head of addresses
         for address in addresses[0]:
-            addrs.append(paradict[address[0]])
+            addrs.append(paradict[address])
         addrs = np.array(addrs)
 
         features = getHeadFeatures(possibleHeaders, addrs, posspara)

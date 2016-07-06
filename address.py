@@ -43,9 +43,9 @@ def getAddress(url, predictors, params):
             results = results.union(getLabels(res, paras, params['NUM_CLUST']))
 
         addresses = sorted(results, key=lambda x: x[1])
-        print addresses
+        # print addresses
         final = accuAddr(addresses)
-    print final
+    # print final
     return final
     # raw = soup.get_text().encode('ascii', 'ignore')
     # raw = raw.replace('\t', '')

@@ -46,19 +46,19 @@ def consolidateStuff(url, titles, addresses, images):
 
     addrs = []
     # the head of addresses
-    for address in addresses[0]:
+    for address in addresses:
         addrs.append(paradict[address[0]])
     addrs = np.array(addrs)
 
     posspara = LongParas(lens)
     fullThing = getFull(titles, addrs, posspara)
     jsonoutput = {}
-
+    print fullThing
     for i in range(len(fullThing)):
         onething = fullThing[i]
         jsonoutput[i] = {'Place Name': paragraphs[onething[0]],
                          'Write-up': paragraphs[posspara[onething[1]]],
-                         'Address': addresses[0][onething[2]]
+                         'Address': addresses[onething[2]]
                          }
 
     choices = [str(image) for image in images]
@@ -67,8 +67,8 @@ def consolidateStuff(url, titles, addresses, images):
         rightImage = process.extractOne(jsonoutput[i]['Place Name'], choices)
         imgurls = re.findall('img .*src="(.*?)"', rightImage[0])
         jsonoutput[i]['Image URL'] = imgurls[0]
-
-    return json.dumps(jsonoutput, indent=4)
+    # print jsonoutput
+    return json.dumps(jsonoutput)
 
 
 def LongParas(lens):

@@ -1,5 +1,6 @@
 from flask import render_template
 from models import getModel
+import time
 from title import getTitle
 from address import getAddress
 from utils import consolidateStuff, getImg
@@ -71,10 +72,23 @@ def index():
 @app.route('/', methods=['POST'])
 def post_form():
     url = request.form['text']
+    start_time = time.time()
+
     addresses = getAddress(url, [(paramsold, rnnModelold), (params, rnnModel)])
+    print("addresses took {:.3f}s".format(time.time() - start_time))
+
+    t1 = time.time()
     titles = getTitle(url, addresses)
+    print("titles took {:.3f}s".format(time.time() - t1))
+
+    t2 = time.time()
     images = getImg(url)
+    print("images took {:.3f}s".format(time.time() - t2))
+
+    t3 = time.time()
     str_to_return = consolidateStuff(url, titles, addresses, images)
+    print("consolidation took {:.3f}s".format(time.time() - t3))
+
     print str_to_return
     str_to_return = str_to_return.replace('\n', '<br>')
     return str_to_return

@@ -10,6 +10,7 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
     soup, paragraphs, paradict = parsePage(url)
     lens = [len(p) for p in paragraphs]
     headerIndices = []
+    print len(addresses)
 
     # separate method for ladyironchef.com
     if 'ladyironchef' in url:
@@ -19,32 +20,25 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
     elif 'tripadvisor' in url:
         headerIndices = TripAdTitle(soup, paradict)
 
+    elif len(addresses) <= 3:
+        # onetitle = getoneheader(soup, possibleHeaders, paragraphs)
+        headerIndices = [-1]
+
     else:
         # in a few rare cases the title of page can be under <Hn> inside the page also
         # header_titles = [soup.findAll('h'+str(i)) for i in range(1, 5)]
         # header_titles.append(soup.findAll('strong'))
         possibleHeaders = GenPage(soup, paradict)
         # this implies that most probably page is a multi-place blog
-        # print addresses
-
-        ''' **to be checked**
-        if len(addresses[0]) <= 3:
-            onetitle = getoneheader(soup, out)
-            jsonoutput = {}
-            jsonoutput[0] = {'Place Name': onetitle,
-                         'Write-up'  : "***to_implement*** :(",
-                         'Address'   : str(addresses[0])}
-            return jsonoutput
-        '''
-
         # get the long write-ups about the headings
         posspara = LongParas(lens)
 
         # generate indices for addresses, they are the first line of address
         addrs = []
+
         # the head of addresses
-        for address in addresses[0]:
-            addrs.append(paradict[address])
+        for address in addresses:
+            addrs.append(paradict[address[0]])
         addrs = np.array(addrs)
 
         features = getHeadFeatures(possibleHeaders, addrs, posspara)
@@ -78,11 +72,15 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
         for idx in reqindices:
             headerIndices.append(possibleHeaders[idx])
 
+    print "printing titles"
+    for idx in headerIndices:
+        print paragraphs[idx]
+
     return headerIndices
 
 
 def LICTitle(soup, paradict):
-    tags = soup.findAll('span', {"style":"font-size: x-large;"})
+    tags = soup.findAll('span', {"style": "font-size: x-large;"})
     titles = []
 
     for tag in tags:
@@ -126,6 +124,7 @@ def GenPage(soup, paradict):
             possheaders.add(paradict[head])
 
     possheaders = sorted(list(possheaders))
+    # print "possheaders = " + str(possheaders)
     return possheaders
 
 
@@ -137,9 +136,11 @@ def getHeadFeatures(headers, addresses, possparas):
     '''
     out = []
     for header in headers:
-        distpara = min(possparas-header, key=lambda x: x if x>0 else float('inf'))
-        distaddr = min(addresses-header, key=lambda x: x if x>0 else float('inf'))
-        out.append(distpara+distaddr)
+        distpara = min(possparas - header,
+                       key=lambda x: x if x > 0 else float('inf'))
+        distaddr = min(addresses - header,
+                       key=lambda x: x if x > 0 else float('inf'))
+        out.append(distpara + distaddr)
     return np.array(out)
 
 
@@ -152,10 +153,17 @@ def onlyNumbers(teststr):
 
 
 # work on this... decide which header to return
-def getoneheader(soup, out):
-    page_title = soup.select("title")[0].get_text().encode('ascii', 'ignore').strip()
+def getoneheader(soup, out, paragraphs):
+    page_title = soup.select("title")[0].get_text().encode(
+        'ascii', 'ignore').strip()
     bkpt = 0
     # print page
+
+    '''
+    get the stuff in the page title before the 1st punctuation mark
+    as usually if a restaurant's name is 'Bistrot Belhara' then the title
+    of the page is 'Bistrot Belhara | Paris by Mouth - Mozilla Firefox'
+    '''
     for i in range(len(page_title)):
         if page_title[i] in string.punctuation and page_title[i] != '\'':
             bkpt = i
@@ -163,9 +171,10 @@ def getoneheader(soup, out):
 
     page_title = page_title[0:bkpt].strip()
     print page_title
-    ## page_title in one of the titles or one of the titles in page_title
+
+    # page_title in one of the titles or one of the titles in page_title
     lwr = [t.lower() for t in out]
-    posstitle = [l for l in lwr if l in t.lower()]
+    posstitle = [l for l in lwr if l in page_title.lower()]
     print posstitle
     if page_title.lower() in lwr or len(posstitle) != 0:
         if len(page_title) < len(posstitle[0]):

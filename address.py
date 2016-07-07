@@ -43,7 +43,8 @@ def getAddress(url, predictors):
         addresses = sorted(results, key=lambda x: x[1])
         # print addresses
         final = accuAddr(addresses)
-    # print final
+
+    print final
     return final
     # raw = soup.get_text().encode('ascii', 'ignore')
     # raw = raw.replace('\t', '')
@@ -56,14 +57,14 @@ def getAddress(url, predictors):
 
 
 def TripAdAddr(soup):
-    strt = soup.findAll("span", {"class": 'street-address'}
-                        )[0].get_text().encode('ascii', 'ignore')
-    loc = soup.findAll("span", {"class": 'locality'})[
-        0].get_text().encode('ascii', 'ignore')
-    count = soup.findAll(
-        "span", {"class": 'country-name'})[0].get_text().encode('ascii', 'ignore')
+    # remove the trailing spaces and the extra commas
+    strt = soup.findAll("span", {"class": 'street-address'})[0].get_text().encode('ascii', 'ignore').strip().strip(',')
 
-    return [[strt, loc, count]]
+    loc = soup.findAll("span", {"class": 'locality'})[0].get_text().encode('ascii', 'ignore').strip().strip(',')
+
+    count = soup.findAll("span", {"class": 'country-name'})[0].get_text().encode('ascii', 'ignore').strip().strip(',')
+
+    return [[strt + ", " + loc + ", " + count]]
 
 
 def accuAddr(addresses):
@@ -89,7 +90,8 @@ def hasdate(address):
     return False
 
 
-# new_address tries to do both ie. hierarchical and one-line addresses in one go
+# new_address tries to do both ie. hierarchical and one-line addresses in
+# one go
 def new_address(text):
     paragraphs = [p.strip() for p in text.split('\n') if len(p.strip()) > 2]
     tokked = [st.tokenize(p) for p in paragraphs]

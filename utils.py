@@ -21,6 +21,8 @@ def parsePage(url):
         elem.extract()
 
     raw = soup.get_text().encode('ascii', 'ignore')
+    page_title = soup.select("title")[0].get_text().encode(
+        'ascii', 'ignore').strip().encode('ascii')
     paragraphs = []
 
     for p in raw.split('\n'):
@@ -30,11 +32,15 @@ def parsePage(url):
             p = p.replace('\n', '')
             paragraphs.append(p)
 
+    paragraphs.append(page_title)
     # lens can be computed on it's own
     paradict = {}
     for i in range(len(paragraphs)):
         if paragraphs[i] not in paradict:
             paradict[paragraphs[i]] = i
+
+    # special entry for the title of the page
+    paradict[page_title] = -1
 
     return soup, paragraphs, paradict
 
@@ -47,12 +53,13 @@ def consolidateStuff(url, titles, addresses, images):
     # the head of addresses
     for address in addresses:
         addrs.append(paradict[address[0]])
-    addrs = np.array(addrs)
 
+    addrs = np.array(addrs)
     posspara = LongParas(lens)
     fullThing = getFull(titles, addrs, posspara)
     jsonoutput = {}
-    print fullThing
+    # print fullThing
+
     for i in range(len(fullThing)):
         onething = fullThing[i]
         jsonoutput[i] = {'Place Name': paragraphs[onething[0]],
@@ -63,9 +70,11 @@ def consolidateStuff(url, titles, addresses, images):
     choices = [str(image) for image in images]
 
     for i in range(len(fullThing)):
-        rightImage = process.extractOne(jsonoutput[i]['Place Name'], choices)
-        imgurls = re.findall('img .*src="(.*?)"', rightImage[0])
+        rightImage = process.extractOne(jsonoutput[i]['Place Name'],
+                                        choices)[0]
+        imgurls = re.findall('img .*src="(.*?)"', rightImage)
         jsonoutput[i]['Image URL'] = imgurls[0]
+
     # print jsonoutput
     return json.dumps(jsonoutput, indent=4)
 
@@ -81,6 +90,7 @@ def LongParas(lens):
 
     # these are the possible paragraphs about the restaurants
     posspara = np.where(labels == reqlabel)[0]
+    # print "len(posspara) = " + str(len(posspara))
     return posspara
 
 
@@ -112,7 +122,8 @@ def process_url(raw_url):
     return raw_url
 
 
-# get the images first and then join them later... required if parallelized later
+# get the images first and then join them later... required if
+# parallelized later
 def getImg(url):
     opener = urllib2.build_opener()
     opener.addheaders = [
@@ -165,7 +176,8 @@ def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
         batches = len1 / BATCH_SIZE + 1
         data = np.zeros((batches * BATCH_SIZE, NUM_FEATURES))
         for i in range(len1):
-            data[i / BATCH_SIZE, :] = np.array(getvec([paras[i]]))[:NUM_FEATURES]
+            data[i / BATCH_SIZE,
+                 :] = np.array(getvec([paras[i]]))[:NUM_FEATURES]
 
     return data
 

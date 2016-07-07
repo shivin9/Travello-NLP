@@ -112,10 +112,10 @@ def getRNN(params, filename=None):
     X_train1, y_train1, X_val1, y_val1 = _load_dataset(X1, y1)
     X_train2, y_train2, X_val2, y_val2 = _load_dataset(X2, y2)
 
-    input_var = T.dtensor3('input_var')
+    input_var = T.ftensor3('input_var')
     l_out = rnn(input_var, params)
 
-    target_values = T.dmatrix('target_output')
+    target_values = T.fmatrix('target_output')
     network_output = lasagne.layers.get_output(l_out)
     cost = T.mean((network_output - target_values)**2)
 
@@ -128,6 +128,9 @@ def getRNN(params, filename=None):
     if filename:
         print "Loading a previously saved model..."
         all_param_values = np.load("./models/" + filename + '.npy')
+
+        for i in range(len(all_param_values)):
+            all_param_values[i] = all_param_values[i].astype('float32')
 
         all_params = lasagne.layers.get_all_params(l_out)
         for p, v in zip(all_params, all_param_values):
@@ -201,7 +204,7 @@ def getRNN(params, filename=None):
             val_acc = 0
             val_batches = 0
 
-            for batch in iterate_minibatches(X_val1, y_val1, params['BATCH_SIZE'],
+            for batch in iterate_minibatches(X_val2, y_val2, params['BATCH_SIZE'],
                                              params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
                 inputs, targets = batch
                 err = validate(inputs, targets)
@@ -230,10 +233,10 @@ def getLSTM(params, filename):
     X_train1, y_train1, X_val1, y_val1 = _load_dataset(X1, y1)
     X_train2, y_train2, X_val2, y_val2 = _load_dataset(X2, y2)
 
-    input_var = T.dtensor3('input_var')
+    input_var = T.ftensor3('input_var')
     l_out = lstm(input_var, params)
 
-    target_values = T.dmatrix('target_output')
+    target_values = T.fmatrix('target_output')
 
     network_output = lasagne.layers.get_output(l_out)
     cost = T.mean((network_output - target_values)**2)
@@ -247,6 +250,9 @@ def getLSTM(params, filename):
     if filename:
         print "Loading a previously saved model..."
         all_param_values = np.load("./models/" + filename + '.npy')
+
+        for i in range(len(all_param_values)):
+            all_param_values[i] = all_param_values[i].astype('float32')
 
         all_params = lasagne.layers.get_all_params(l_out)
         for p, v in zip(all_params, all_param_values):
@@ -278,7 +284,7 @@ def getLSTM(params, filename):
                 train_err += train(inputs, targets)
                 train_batches += 1
 
-            for batch in iterate_minibatches(X_train1, y_train1, params['BATCH_SIZE'],
+            for batch in iterate_minibatches(X_train2, y_train2, params['BATCH_SIZE'],
                                              params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
                 # if train_batches % 50 == 0:
                 #     print "batch number " + str(train_batches)
@@ -384,7 +390,7 @@ def _load_dataset(X, y):
     for i in range(len(X)):
         X[i] = np.array(X[i])
 
-    X = np.array(X)
+    X = np.array(X, dtype='float32')
     y = np.array(y, dtype='int32')
 
     X_train = X[:-1000]

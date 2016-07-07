@@ -207,7 +207,7 @@ def getvec(lines):
             length of paragraph(7)
             has date?(8)
     '''
-    vec = [0] * 8
+    vec = [0] * 9
     for line in lines:
         phnum = len(reph.findall(line))
         nums = len(renum.findall(line))
@@ -217,27 +217,28 @@ def getvec(lines):
             numterm += 1
             # terms = terms.lower()
             if terms.lower() in streets:
-                vec[3] += streets[terms.lower()] / summ
+                vec[0] += 1
+                vec[4] += streets[terms.lower()] / summ
 
             if terms in states:
                 # state names are biased towards US and Australia addresses
                 # therefore we don't add their weights
-                vec[0] += 1
-
-            if terms in cities:
                 vec[1] += 1
 
-            if terms in countries:
+            if terms in cities:
                 vec[2] += 1
 
-        vec[4] = phnum
-        vec[5] = nums
-        vec[6] = 10 / float(numterm)
+            if terms in countries:
+                vec[3] += 1
+
+        vec[5] = phnum
+        vec[6] = nums
+        vec[7] = 10 / float(numterm)
 
         matches = datefinder.find_dates(line, strict=True)
         try:
             for match in matches:
-                vec[7] = 1
+                vec[8] = 1
                 break
         except:
             pass

@@ -66,3 +66,7 @@ Changed the weights of the streets... 1000 is too much
 5th July:- Integrated the whole thing with the extension... Playing around with the dataset and classifier
 
 6th July:- Removing the number of streets feature as I think it is the one which is causing problems. Will try CNN and Deep Belief Neural Networks
+
+7th July:- fixed some bugs relating to address extraction. tried CNNs but it;s not working very well...
+
+8th July:- CNNs working better than yesterday but still not usable...

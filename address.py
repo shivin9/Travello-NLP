@@ -5,7 +5,8 @@ import datefinder
 import json
 import sys
 import re
-from utils import parsePage, getData
+from utils import parsePage, getData, getScores
+from models import rulEx
 
 sys.path.insert(0, './database/')
 st = TreebankWordTokenizer()
@@ -33,18 +34,24 @@ def getAddress(url, predictors):
 
     else:
         results = set()
+
         for params, pred in predictors:
-            # pred(X, paras) for RULE based classifier
             X = getData(paras, params['NUM_FEATURES'], params[
                 'BATCH_SIZE'], SEQ_LENGTH=params['SEQ_LENGTH'])
             res = pred(X).flatten()
-            results = results.union(getLabels(res, paras, params['NUM_CLUST']))
+            addrs = getLabels(res, paras, params['NUM_CLUST'])
+            # print addrs
+            results = results.union(addrs)
+            print getScores(pred, paras, params)
 
+        # print results
+        # print rulEx(paras)
+        results = results.union(rulEx(paras))
         addresses = sorted(results, key=lambda x: x[1])
         # print addresses
         final = accuAddr(addresses)
 
-    print final
+    # print final
     return final
     # raw = soup.get_text().encode('ascii', 'ignore')
     # raw = raw.replace('\t', '')

@@ -10,3 +10,5 @@ Instead... dataset needs to be improved. Need more variety. It needs to be made 
 
 Sequencing feature is still not coming...
 
+parallelize the image extractor... very slow
+train the RNN and the CNN using rolling data... it makes more sense to do it that way for both

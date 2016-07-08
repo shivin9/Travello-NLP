@@ -8,12 +8,59 @@ from flask import Flask
 
 app = Flask(__name__)
 
-params = {'GRAD_CLIP': 100, 'NAME': 'RNN', 'SEQ_LENGTH': 1, 'NUM_EPOCHS': 15, 'LEARNING_RATE': 0.01,
-          'N_HIDDEN': 512, 'PRINT_FREQ': 5, 'NUM_FEATURES': 9, 'BATCH_SIZE': 32, 'NUM_CLUST': 3}
+params = {'GRAD_CLIP': 100,
+          'NAME': 'RNN',
+          'SEQ_LENGTH': 1,
+          'NUM_EPOCHS': 20,
+          'LEARNING_RATE': 0.01,
+          'N_HIDDEN': 512,
+          'PRINT_FREQ': 5,
+          'NUM_FEATURES': 9,
+          'BATCH_SIZE': 512,
+          'NUM_CLUST': 3}
 
-print params
-filename = "../RNN32"
-rnnModel = getModel(params, filename)
+paramsold = {'BATCH_SIZE': 512,
+             'GRAD_CLIP': 100,
+             'LEARNING_RATE': 0.01,
+             'NAME': 'RNN',
+             'NUM_CLUST': 3,
+             'NUM_EPOCHS': 20,
+             'NUM_FEATURES': 8,
+             'N_HIDDEN': 512,
+             'PRINT_FREQ': 5,
+             'SEQ_LENGTH': 1,
+             'TYPE': 'new feature1'}
+
+paramslstm = {'BATCH_SIZE': 512,
+              'GRAD_CLIP': 100,
+              'LEARNING_RATE': 0.01,
+              'NAME': 'LSTM',
+              'NUM_CLUST': 3,
+              'NUM_EPOCHS': 10,
+              'NUM_FEATURES': 8,
+              'N_HIDDEN': 512,
+              'PRINT_FREQ': 5,
+              'SEQ_LENGTH': 4,
+              'TYPE': 'new feature1'}
+
+try:
+    # print paramsold
+    rnnModelold = getModel(paramsold, "rnnmodel-old")
+except:
+    print "couldn't create the model... enter a valid filename"
+
+try:
+    # print paramsold
+    rnnModel = getModel(params, "newest")
+except:
+    print "couldn't create the model... enter a valid filename"
+
+
+try:
+    # print paramslstm
+    lstmmodel = getModel(paramslstm, "lstmodel-old")
+except:
+    print "couldn't create the model... enter a valid filename"
 
 
 @app.route('/')

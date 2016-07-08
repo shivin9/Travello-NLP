@@ -39,7 +39,7 @@ summ = 0
 for key in streets.keys():
     summ += streets[key]
 
-summ = float(summ) / 5
+summ = float(summ) / 3
 
 
 def generate_data():

@@ -57,11 +57,11 @@ except:
     print "couldn't create the model... enter a valid filename"
 
 
-try:
-    # print paramslstm
-    lstmmodel = getModel(paramslstm, "lstmodel-old")
-except:
-    print "couldn't create the model... enter a valid filename"
+# try:
+#     # print paramslstm
+#     lstmmodel = getModel(paramslstm, "lstmodel-old")
+# except:
+#     print "couldn't create the model... enter a valid filename"
 
 
 @app.route('/')
@@ -93,5 +93,20 @@ def post_form():
     str_to_return = str_to_return.replace('\n', '<br>')
     return str_to_return
 
+
+@app.route('/json-data/')
+def json_data():
+    url = request.args.get('url', 2)
+    print url
+    addresses = getAddress(url, [(paramsold, rnnModelold), (params, rnnModel)])
+    titles = getTitle(url, addresses)
+    images = getImg(url)
+    str_to_return = consolidateStuff(url, titles, addresses, images)
+    return str_to_return
+
+
 if __name__ == '__main__':
+    app.config.set("HOST", "0.0.0.0"),
+    app.config.set("PORT", 9000)
     app.run()
+    # app.run(host='0.0.0.0', port=1728)

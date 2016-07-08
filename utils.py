@@ -48,28 +48,35 @@ def parsePage(url):
 def consolidateStuff(url, titles, addresses, images):
     soup, paragraphs, paradict = parsePage(url)
     lens = [len(p) for p in paragraphs]
-
-    addrs = []
-    # the head of addresses
-    for address in addresses:
-        addrs.append(paradict[address[0]])
-
-    addrs = np.array(addrs)
-    posspara = LongParas(lens)
-    fullThing = getFull(titles, addrs, posspara)
     jsonoutput = {}
-    # print fullThing
+    posspara = LongParas(lens)
 
-    for i in range(len(fullThing)):
-        onething = fullThing[i]
-        jsonoutput[i] = {'Place Name': paragraphs[onething[0]],
-                         'Write-up': paragraphs[posspara[onething[1]]],
-                         'Address': addresses[onething[2]]
-                         }
+    if 'tripadvisor' in url:
+        jsonoutput[0] = {'Place Name': paragraphs[0],
+                      'Write-up': paragraphs[posspara[0]],
+                      'Address': addresses
+                      }
+
+    else:
+        addrs = []
+        # the head of addresses
+        for address in addresses:
+            addrs.append(paradict[address[0]])
+
+        addrs = np.array(addrs)
+        fullThing = getFull(titles, addrs, posspara)
+        # print fullThing
+
+        for i in range(len(fullThing)):
+            onething = fullThing[i]
+            jsonoutput[i] = {'Place Name': paragraphs[onething[0]],
+                             'Write-up': paragraphs[posspara[onething[1]]],
+                             'Address': addresses[onething[2]]
+                             }
 
     choices = [str(image) for image in images]
 
-    for i in range(len(fullThing)):
+    for i in range(len(titles)):
         rightImage = process.extractOne(jsonoutput[i]['Place Name'],
                                         choices)[0]
         imgurls = re.findall('img .*src="(.*?)"', rightImage)

@@ -1,3 +1,4 @@
+from sklearn import preprocessing
 from fuzzywuzzy import process
 from sklearn.cluster import KMeans
 from bs4 import BeautifulSoup
@@ -198,3 +199,37 @@ def getScores(pred, paras, params):
     for i in range(len(paras)):
         out.append((paras[i], res[i]))
     return out
+
+
+def _load_dataset(X, y, wndw=1):
+    '''
+        wndw is the window_size for buffering the input with 0 vectors
+    '''
+    print "loading scaled data..."
+    for i in range(len(X)):
+        X[i] = np.array(X[i])
+
+    X = np.array(X, dtype='float32')
+    y = np.array(y, dtype='int32')
+
+    X_train = X[:-1000]
+    y_train = y[:-1000]
+
+    X_val = X[-1000:]
+    y_val = y[-1000:]
+
+    if wndw / 2 > 0:
+        num_feat = len(X[0])
+        Xbuffer = np.zeros((wndw / 2, num_feat))
+        ybuffer = np.zeros((wndw / 2,))
+        X_train = np.vstack([Xbuffer, X_train, Xbuffer])
+        X_val = np.vstack([Xbuffer, X_val, Xbuffer])
+
+        # append 0s at the front and the back of both training and testing labels
+        y_train = np.append(ybuffer, y_train)
+        y_train = np.append(y_train, ybuffer)
+
+        y_val = np.append(ybuffer, y_val)
+        y_val = np.append(y_val, ybuffer)
+
+    return X_train, y_train, X_val, y_val

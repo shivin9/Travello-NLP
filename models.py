@@ -1,3 +1,4 @@
+from utils import _load_dataset
 from nltk.tokenize import TreebankWordTokenizer
 import re
 import time
@@ -41,7 +42,8 @@ def cnn(params, input_var=None):
     # and a fully-connected hidden layer in front of the output layer.
 
     # Input layer, as usual:
-    network = lasagne.layers.InputLayer(shape=(params['BATCH_SIZE'], 1, params['CONV'], params['NUM_FEATURES']), input_var=input_var)
+    network = lasagne.layers.InputLayer(shape=(params['BATCH_SIZE'], 1, params[
+                                        'CONV'], params['NUM_FEATURES']), input_var=input_var)
     # This time we do not apply input dropout, as it tends to work less well
     # for convolutional layers.
 
@@ -145,7 +147,6 @@ def lstm(input_var, params):
 
 def getCNN(params, filename=None):
 
-    print "loading data..."
     X_train1, y_train1, X_val1, y_val1 = _load_dataset(X1, y1)
     X_train2, y_train2, X_val2, y_val2 = _load_dataset(X2, y2)
 
@@ -272,9 +273,8 @@ def getCNN(params, filename=None):
 
 def getRNN(params, filename=None):
 
-    print "loading data..."
-    X_train1, y_train1, X_val1, y_val1 = _load_dataset(X1, y1)
-    X_train2, y_train2, X_val2, y_val2 = _load_dataset(X2, y2)
+    X_train1, y_train1, X_val1, y_val1 = _load_dataset(X1, y1, 3)
+    X_train2, y_train2, X_val2, y_val2 = _load_dataset(X2, y2, 3)
 
     input_var = T.ftensor3('input_var')
     l_out = rnn(input_var, params)
@@ -397,7 +397,6 @@ def getRNN(params, filename=None):
 
 def getLSTM(params, filename):
 
-    print "loading data..."
     X_train1, y_train1, X_val1, y_val1 = _load_dataset(X1, y1)
     X_train2, y_train2, X_val2, y_val2 = _load_dataset(X2, y2)
 
@@ -559,34 +558,20 @@ def rulEx(paragraphs):
     return set(possible_addresses)
 
 
-def _load_dataset(X, y):
-    for i in range(len(X)):
-        X[i] = np.array(X[i])
-
-    X = np.array(X, dtype='float32')
-    y = np.array(y, dtype='int32')
-
-    X_train = X[:-1000]
-    y_train = y[:-1000]
-
-    X_val = X[-1000:]
-    y_val = y[-1000:]
-
-    return X_train, y_train, X_val, y_val
-
-
 def iterate_minibatches(inputs, targets, batchsize, NUM_FEATURES, SEQ_LENGTH=None,
                         CONV=None, shuffle=False):
     assert len(inputs) == len(targets)
     num_feat = NUM_FEATURES
     if SEQ_LENGTH:
-        batches = len(inputs) / (batchsize * SEQ_LENGTH) + 1
+        batches = len(inputs) / (batchsize) + 1
         X = np.zeros((batchsize * (batches), SEQ_LENGTH, num_feat))
-        y = np.zeros((batchsize * (batches), SEQ_LENGTH))
+        y = np.zeros((batchsize * batches))
 
         for i in range(len(inputs)):
-            X[i / SEQ_LENGTH, i % SEQ_LENGTH, :] = inputs[i][:num_feat]
-            y[i / SEQ_LENGTH, i % SEQ_LENGTH] = targets[i]
+            # to generate rolling data. We get SEQ_LENGTHs vectors and flatten
+            # them
+            X[i / SEQ_LENGTH, i % SEQ_LENGTH, :] = inputs[i: i + SEQ_LENGTH].flatten()[:num_feat]
+            y[i] = targets[i]
 
         for i in range(batches):
             yield X[i * batchsize: (i + 1) * batchsize], y[i * batchsize: (i + 1) * batchsize]

@@ -1,3 +1,4 @@
+from sklearn import preprocessing
 from fuzzywuzzy import process
 from sklearn.cluster import KMeans
 from bs4 import BeautifulSoup
@@ -174,6 +175,9 @@ def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
         for i in range(len1):
             data1[i] = np.array(getvec([paras[i]]))[:NUM_FEATURES]
 
+        # scale data carefully
+        data1[:len1] = processing.scale(data1[:len1])
+
         data = np.zeros((BATCH_SIZE * (batches), SEQ_LENGTH, NUM_FEATURES))
         for i in range(len(data1)):
             data[i / SEQ_LENGTH, i % SEQ_LENGTH, :] = data1[i]
@@ -198,3 +202,19 @@ def getScores(pred, paras, params):
     for i in range(len(paras)):
         out.append((paras[i], res[i]))
     return out
+
+
+def load_dataset(X, y, wndw=1):
+    for i in range(len(X)):
+        X[i] = np.array(X[i])
+    X = preprocessing.scale(X)
+    X = np.array(X, dtype='float32')
+    y = np.array(y, dtype='int32')
+
+    X_train = X[:-1000]
+    y_train = y[:-1000]
+
+    X_val = X[-1000:]
+    y_val = y[-1000:]
+
+    return X_train, y_train, X_val, y_val

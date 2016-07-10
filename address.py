@@ -46,7 +46,7 @@ def getAddress(url, predictors):
 
         # print results
         # print rulEx(paras)
-        results = results.union(rulEx(paras))
+        # results = results.union(rulEx(paras))
         addresses = sorted(results, key=lambda x: x[1])
         # print addresses
         final = accuAddr(addresses)

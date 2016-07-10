@@ -233,7 +233,7 @@ def getvec(lines):
 
         vec[5] = phnum
         vec[6] = nums
-        vec[7] = 10 / float(numterm)
+        vec[7] = 1 / float(numterm)
 
         matches = datefinder.find_dates(line, strict=True)
         try:

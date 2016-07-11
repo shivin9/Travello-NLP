@@ -1,3 +1,4 @@
+from sklearn.preprocessing import PolynomialFeatures
 from sklearn import preprocessing
 from fuzzywuzzy import process
 from sklearn.cluster import KMeans
@@ -171,14 +172,18 @@ def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
     len1 = len(paras)
     if SEQ_LENGTH:
         batches = len1 / (BATCH_SIZE * SEQ_LENGTH) + 1
-        data1 = np.zeros((BATCH_SIZE * (batches) * SEQ_LENGTH, NUM_FEATURES))
+        data1 = np.zeros((len1, NUM_FEATURES))
+
         for i in range(len1):
             data1[i] = np.array(getvec([paras[i]]))[:NUM_FEATURES]
 
         # scale data carefully
-        data1[:len1] = processing.scale(data1[:len1])
+        data1 = preprocessing.scale(data1)
+        # need to polyfit here as well
+        poly = PolynomialFeatures(degree = 2)
+        data1 = poly.fit_transform(data1)
 
-        data = np.zeros((BATCH_SIZE * (batches), SEQ_LENGTH, NUM_FEATURES))
+        data = np.zeros((BATCH_SIZE * (batches), SEQ_LENGTH, len(data1[0])))
         for i in range(len(data1)):
             data[i / SEQ_LENGTH, i % SEQ_LENGTH, :] = data1[i]
         del(data1)
@@ -187,8 +192,7 @@ def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
         batches = len1 / BATCH_SIZE + 1
         data = np.zeros((batches * BATCH_SIZE, NUM_FEATURES))
         for i in range(len1):
-            data[i / BATCH_SIZE,
-                 :] = np.array(getvec([paras[i]]))[:NUM_FEATURES]
+            data[i / BATCH_SIZE, :] = np.array(getvec([paras[i]]))[:NUM_FEATURES]
 
     return data
 
@@ -207,7 +211,11 @@ def getScores(pred, paras, params):
 def load_dataset(X, y, wndw=1):
     for i in range(len(X)):
         X[i] = np.array(X[i])
+
     X = preprocessing.scale(X)
+    poly = PolynomialFeatures(degree = 2)
+    X = poly.fit_transform(X)
+
     X = np.array(X, dtype='float32')
     y = np.array(y, dtype='int32')
 
@@ -216,5 +224,20 @@ def load_dataset(X, y, wndw=1):
 
     X_val = X[-1000:]
     y_val = y[-1000:]
+
+    if wndw / 2 > 0:
+        num_feat = len(X[0])
+        Xbuffer = np.zeros((wndw / 2, num_feat))
+        ybuffer = np.zeros((wndw / 2,))
+        X_train = np.vstack([Xbuffer, X_train, Xbuffer])
+        X_val = np.vstack([Xbuffer, X_val, Xbuffer])
+
+        # append 0s at the front and the back of both training and testing
+        # labels
+        y_train = np.append(ybuffer, y_train)
+        y_train = np.append(y_train, ybuffer)
+
+        y_val = np.append(ybuffer, y_val)
+        y_val = np.append(y_val, ybuffer)
 
     return X_train, y_train, X_val, y_val

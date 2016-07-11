@@ -274,9 +274,9 @@ def getCNN(params, filename=None):
 def getRNN(params, filename=None):
 
     print "loading data..."
-    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1)
-    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2)
-
+    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, 5)
+    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, 5)
+    params['NUM_FEATURES'] = len(X_train1[0])
     input_var = T.ftensor3('input_var')
     l_out = rnn(input_var, params)
 
@@ -566,16 +566,23 @@ def iterate_minibatches(inputs, targets, batchsize, NUM_FEATURES, SEQ_LENGTH=Non
                         CONV=None, shuffle=False):
     assert len(inputs) == len(targets)
     num_feat = NUM_FEATURES
+    # print inputs.shape
+    if shuffle:
+        indices = np.arange(len(inputs))
+        np.random.shuffle(indices)
+
     if SEQ_LENGTH:
+        # calculate the number of batches in which inputs has to broken up
+        # depending on the BATCH_SIZE
         batches = len(inputs) / (batchsize * SEQ_LENGTH) + 1
         X = np.zeros((batchsize * (batches), SEQ_LENGTH, num_feat))
-        y = np.zeros((batchsize * (batches), ))
+        y = np.zeros((batchsize * batches * SEQ_LENGTH, ))
 
-        for i in range(len(inputs)):
+        for i in range(len(X) - SEQ_LENGTH):
             X[i / SEQ_LENGTH, i % SEQ_LENGTH, :] = inputs[i][:num_feat]
             y[i / SEQ_LENGTH] = targets[i]
 
-        for i in range(batches):
+        for i in np.arange(batches):
             yield X[i * batchsize: (i + 1) * batchsize], y[i * batchsize: (i + 1) * batchsize]
 
     elif CONV:

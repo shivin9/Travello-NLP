@@ -178,14 +178,22 @@ def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
             data1[i] = np.array(getvec([paras[i]]))[:NUM_FEATURES]
 
         # scale data carefully
-        data1 = preprocessing.scale(data1)
+        # data1 = preprocessing.scale(data1)
+
         # need to polyfit here as well
         poly = PolynomialFeatures(degree = 2)
         data1 = poly.fit_transform(data1)
 
+        if SEQ_LENGTH / 2 > 0:
+            num_feat = len(data1[0])
+            Xbuffer = np.zeros((SEQ_LENGTH / 2, num_feat))
+            data1 = np.vstack([Xbuffer, data1, Xbuffer])
+
         data = np.zeros((BATCH_SIZE * (batches), SEQ_LENGTH, len(data1[0])))
-        for i in range(len(data1)):
-            data[i / SEQ_LENGTH, i % SEQ_LENGTH, :] = data1[i]
+
+        for i in range(len(data1) - SEQ_LENGTH):
+            data[i, :, :] = data1[i: i + SEQ_LENGTH]
+
         del(data1)
 
     else:
@@ -212,7 +220,7 @@ def load_dataset(X, y, wndw=1):
     for i in range(len(X)):
         X[i] = np.array(X[i])
 
-    X = preprocessing.scale(X)
+    # X = preprocessing.scale(X)
     poly = PolynomialFeatures(degree = 2)
     X = poly.fit_transform(X)
 

@@ -361,11 +361,11 @@ def getRNN(params, filename=None):
             # to prevent overfitting
             # or val_err - old_valerr[0] < 0.001:
             # or old_valerr[0] - val_err < 0.001:
-            if val_err - old_valerr[0] > 0.03:
-                print "overfitting or model reached saturation...\n"
-                print old_valerr
-                l_out = old_netout
-                break
+            # if val_err - old_valerr[0] > 0.03:
+            #     print "overfitting or model reached saturation...\n"
+            #     print old_valerr
+            #     l_out = old_netout
+            #     break
 
             old_netout = l_out
             old_valerr[0] = val_err
@@ -579,7 +579,8 @@ def iterate_minibatches(inputs, targets, batchsize, NUM_FEATURES, SEQ_LENGTH=Non
         y = np.zeros((batchsize * batches * SEQ_LENGTH, ))
 
         for i in range(len(X) - SEQ_LENGTH):
-            X[i / SEQ_LENGTH, i % SEQ_LENGTH, :] = inputs[i][:num_feat]
+            X[i / SEQ_LENGTH, :, :] = inputs[i: i + SEQ_LENGTH]
+            # for SEQ_LENGTH number of records, append a target value
             y[i / SEQ_LENGTH] = targets[i]
 
         for i in np.arange(batches):

@@ -70,3 +70,11 @@ Changed the weights of the streets... 1000 is too much
 7th July:- fixed some bugs relating to address extraction. tried CNNs but it;s not working very well...
 
 8th July:- CNNs working better than yesterday but still not usable...
+
+9th July:- Broke head on different types of RNN's, with appended rolling sequences, normal sequencing, single prediction of a whole sequence as opposed to finding the labels for every paragraph in a sequence etc... started to conduct TSNE analysis, tried to scale and normalize the features, and even expanded them by taking polynomial interactions
+
+10th July:- More or less same as yesterday...
+
+1th July:- The poly features 5 sequence RNN is working fine... it get a good verification error but still cant classify as well... will work in the idea of separating the classification of different parts of the address as it in that ACM paper
+
+12th July:- starting first with the TSNE analysis of that different label idea before implementing it

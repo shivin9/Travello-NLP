@@ -221,11 +221,11 @@ def load_dataset(X, y, wndw=1):
         X[i] = np.array(X[i])
 
     # X = preprocessing.scale(X)
-    poly = PolynomialFeatures(degree = 2)
-    X = poly.fit_transform(X)
-
+    # poly = PolynomialFeatures(degree = 2)
+    # X = poly.fit_transform(X)
     X = np.array(X, dtype='float32')
     y = np.array(y, dtype='int32')
+    X[:, 6] = preprocessing.scale(X[:, 6])
 
     X_train = X[:-1000]
     y_train = y[:-1000]

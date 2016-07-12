@@ -12,10 +12,10 @@ sys.path.insert(0, './database/features')
 sys.path.insert(0, './database/')
 st = TreebankWordTokenizer()
 
-from datavec1 import X1
-from datavec2 import X2
-from labels1 import y1
-from labels2 import y2
+from datavec111 import X1
+from datavec211 import X2
+from labels111 import y1
+from labels211 import y2
 
 
 def getModel(params, filename=None):

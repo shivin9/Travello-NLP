@@ -16,7 +16,7 @@ params = {'GRAD_CLIP': 100,
           'LEARNING_RATE': 0.01,
           'N_HIDDEN': 512,
           'PRINT_FREQ': 5,
-          'NUM_FEATURES': 9,
+          'NUM_FEATURES': 11,
           'BATCH_SIZE': 512,
           'NUM_CLUST': 3}
 
@@ -98,6 +98,8 @@ def post_form():
 def json_data():
     url = request.args.get('url', 2)
     print url
+
+    # addresses is a list of text, not indices
     addresses = getAddress(url, [(paramsold, rnnModelold), (params, rnnModel)])
     titles = getTitle(url, addresses)
     images = getImg(url)

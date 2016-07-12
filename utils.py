@@ -61,7 +61,7 @@ def consolidateStuff(url, titles, addresses, images):
 
     else:
         addrs = []
-        # the head of addresses
+        # the first line of addresses
         for address in addresses:
             addrs.append(paradict[address[0]])
 

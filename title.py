@@ -111,6 +111,7 @@ def TripAdTitle(soup, paradict):
 
 def GenPage(soup, paradict):
     headings = soup.findAll(re.compile('h[0-5]|strong'))
+    # to remove duplicates, add them to a set
     possheaders = set()
     # to select the elements which have the maximum number of common tags-- failed idea
     # strip the string of waste space from the sides
@@ -136,8 +137,10 @@ def getHeadFeatures(headers, addresses, possparas):
     '''
     out = []
     for header in headers:
+        # distance to nearest long paragraph
         distpara = min(possparas - header,
                        key=lambda x: x if x > 0 else float('inf'))
+        # distance to nearest address
         distaddr = min(addresses - header,
                        key=lambda x: x if x > 0 else float('inf'))
         out.append(distpara + distaddr)

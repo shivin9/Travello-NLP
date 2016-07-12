@@ -39,10 +39,10 @@ summ = 0
 for key in streets.keys():
     summ += streets[key]
 
-summ = float(summ) / 3
+summ = float(summ) / 4
 
 
-def generate_data():
+def generate_hierarchical():
     labels1 = []
     with open('./database/hard_data/walmart-full.json') as addrs:
         addrs = json.load(addrs)
@@ -65,24 +65,27 @@ def generate_data():
         temp += random.sample(garbage, gnum1)
         y += [0] * gnum1
 
-        # probabilistically append the restaurant name
-        if rnum > 0.6:
-            temp += random.sample(cafes, 1)
-            y += [0]
+        # probabilistically append the restaurant name... leaving for now
+        # if rnum > 0.6:
+        #     temp += random.sample(cafes, 1)
+        #     y += [1]
 
-        # necessarily append the address1
+        # necessarily append the address1, different labels for different parts of the address
         temp.append(addrs[i]['address']['address1'].encode('ascii', 'ignore'))
+        y += [1]
         cnt += 1
         if rnum > 0.05:
             temp.append(addrs[i]['address']['city'].encode('ascii', 'ignore') + ", " + addrs[i]['address'][
                         'state'].encode('ascii', 'ignore') + ", " + addrs[i]['address']['postalCode'].encode('ascii', 'ignore'))
+            y += [2]
             cnt += 1
 
-            # dont put phone numbers in all cases as then it will learn that only
+            # dont put phone numbers in all cases as then it will learn that feature only
             if rnum > 0.6 and 'phone' in addrs[i]:
                 temp.append(addrs[i]['phone'].encode('ascii', 'ignore'))
+                y += [3]
                 cnt += 1
-        y += [1] * cnt
+        # y += [1] * cnt
         temp += random.sample(garbage, gnum2)
         y += [0] * gnum2
         labels1 += y
@@ -140,14 +143,17 @@ def oneliners():
             gnum1 = int(random.gauss(10, 5))
             gnum2 = int(random.gauss(10, 5))
 
-        if rnum > 0.6:
-            temp += random.sample(cafes, 1)
-            y1 += [1]
+        # leaving the cafe names for now
+        # if rnum > 0.6:
+        #     temp += random.sample(cafes, 1)
+        #     y1 += [1]
 
         temp += random.sample(garbage, gnum1)
         y1 += [0] * gnum1
         ordd = order
 
+        # randomly leave out the last part of the addresses so that it's not biased towards learning
+        # phone numbers
         if rnum < 0.5:
             ordd = order[:-1]
         if rnum < 0.4:
@@ -161,7 +167,8 @@ def oneliners():
         temp.append(str1)
         temp += random.sample(garbage, gnum2)
         # print temp
-        y1 += [1]
+        # label 4 is specially for one-line addresses
+        y1 += [4]
         y1 += [0] * gnum2
         lengths2.append(len(y1))
         labels2 += y1
@@ -206,8 +213,10 @@ def getvec(lines):
             zip codes?(6)
             length of paragraph(7)
             has date?(8)
+            1/length of paragraphs(9)
+            separate feature for single words(10)
     '''
-    vec = [0] * 9
+    vec = [0] * 11
     for line in lines:
         phnum = len(reph.findall(line))
         nums = len(renum.findall(line))
@@ -231,20 +240,26 @@ def getvec(lines):
             if terms in countries:
                 vec[3] += 1
 
-        vec[5] = phnum
-        vec[6] = nums
-        vec[7] = 1 / float(numterm)
+        vec[5] = 10 / float(numterm)
+        vec[6] = numterm
+        vec[7] = phnum
+        vec[8] = nums
+
+        # to eliminate single terms
+        if numterm == 1:
+            vec[10] = 1
 
         matches = datefinder.find_dates(line, strict=True)
         try:
             for match in matches:
-                vec[8] = 1
+                vec[9] = 1
                 break
         except:
             pass
+
     return vec
 
 
 if __name__ == '__main__':
-    generate_data()
+    generate_hierarchical()
     oneliners()

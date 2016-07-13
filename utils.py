@@ -9,8 +9,11 @@ import json
 import re
 from create_training import getvec
 
-
+eps = np.finfo(np.float32).eps
+eps = 0.001
 # will parse the page only once
+
+
 def parsePage(url):
     opener = urllib2.build_opener()
     opener.addheaders = [
@@ -55,9 +58,9 @@ def consolidateStuff(url, titles, addresses, images):
 
     if 'tripadvisor' in url:
         jsonoutput[0] = {'Place Name': paragraphs[0],
-                      'Write-up': paragraphs[posspara[0]],
-                      'Address': addresses
-                      }
+                         'Write-up': paragraphs[posspara[0]],
+                         'Address': addresses
+                         }
 
     else:
         addrs = []
@@ -181,7 +184,7 @@ def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
         # data1 = preprocessing.scale(data1)
 
         # need to polyfit here as well
-        poly = PolynomialFeatures(degree = 2)
+        poly = PolynomialFeatures(degree=2)
         data1 = poly.fit_transform(data1)
 
         if SEQ_LENGTH / 2 > 0:
@@ -200,7 +203,8 @@ def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
         batches = len1 / BATCH_SIZE + 1
         data = np.zeros((batches * BATCH_SIZE, NUM_FEATURES))
         for i in range(len1):
-            data[i / BATCH_SIZE, :] = np.array(getvec([paras[i]]))[:NUM_FEATURES]
+            data[i / BATCH_SIZE,
+                 :] = np.array(getvec([paras[i]]))[:NUM_FEATURES]
 
     return data
 
@@ -217,6 +221,10 @@ def getScores(pred, paras, params):
 
 
 def load_dataset(X, y, wndw=1):
+    '''
+        wndw is the window_size for buffering the input with 0 vectors
+    '''
+    # print "loading scaled data..."
     for i in range(len(X)):
         X[i] = np.array(X[i])
 
@@ -225,7 +233,11 @@ def load_dataset(X, y, wndw=1):
     # X = poly.fit_transform(X)
     X = np.array(X, dtype='float32')
     y = np.array(y, dtype='int32')
-    X[:, 6] = preprocessing.scale(X[:, 6])
+
+    # normalize the continuous valued columns except the 5th column
+    X = X.T
+    X[[0, 1, 2, 3, 5, 6]] = preprocessing.minmax_scale(X[[0, 1, 2, 3, 5, 6]])
+    X = X.T
 
     X_train = X[:-1000]
     y_train = y[:-1000]
@@ -233,10 +245,14 @@ def load_dataset(X, y, wndw=1):
     X_val = X[-1000:]
     y_val = y[-1000:]
 
+    # the cross-categorical cost function requires input in the range (0,1)
+    X[X < eps] = eps
+    X[X > 1 - eps] = 1 - eps
+
     if wndw / 2 > 0:
         num_feat = len(X[0])
-        Xbuffer = np.zeros((wndw / 2, num_feat))
-        ybuffer = np.zeros((wndw / 2,))
+        Xbuffer = np.ones((wndw / 2, num_feat)) * eps
+        ybuffer = np.ones((wndw / 2,)) * eps
         X_train = np.vstack([Xbuffer, X_train, Xbuffer])
         X_val = np.vstack([Xbuffer, X_val, Xbuffer])
 

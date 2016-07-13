@@ -242,6 +242,8 @@ def getvec(lines):
 
         vec[5] = 10 / float(numterm)
         vec[6] = numterm
+
+        ### binary features start from here
         vec[7] = phnum
         vec[8] = nums
 

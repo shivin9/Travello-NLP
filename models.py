@@ -12,10 +12,15 @@ sys.path.insert(0, './database/features')
 sys.path.insert(0, './database/')
 st = TreebankWordTokenizer()
 
-from datavec111 import X1
-from datavec211 import X2
-from labels111 import y1
-from labels211 import y2
+from datavec1 import X1
+from datavec2 import X2
+from labels1 import y1
+from labels2 import y2
+
+
+def log_softmax(x):
+    xdev = x - x.max(1, keepdims=True)
+    return xdev - T.log(T.sum(T.exp(xdev), axis=1, keepdims=True))
 
 
 def getModel(params, filename=None):
@@ -94,8 +99,8 @@ def rnn(input_var, params):
         only_return_final=True, backwards=True)
 
     l_concat = lasagne.layers.ConcatLayer([l_forward, l_backward])
-    l_out = lasagne.layers.DenseLayer(l_concat, num_units=1,
-                                      nonlinearity=lasagne.nonlinearities.tanh)
+    l_out = lasagne.layers.DenseLayer(l_concat, num_units=5,
+                                      nonlinearity=lasagne.nonlinearities.softmax)
 
     return l_out
 
@@ -147,7 +152,7 @@ def lstm(input_var, params):
 def getCNN(params, filename=None):
 
     print "loading data..."
-    X_train1, y_train1, X_val1, y_val1 = s_dataset(X1, y1)
+    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1)
     X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2)
 
     input_var = T.tensor4('inputs')
@@ -274,21 +279,25 @@ def getCNN(params, filename=None):
 def getRNN(params, filename=None):
 
     print "loading data..."
-    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, 5)
-    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, 5)
+    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['SEQ_LENGTH'])
+    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['SEQ_LENGTH'])
+
+    # the number of features may change if we expand the features using polynomial expansion
     params['NUM_FEATURES'] = len(X_train1[0])
+
     input_var = T.ftensor3('input_var')
     l_out = rnn(input_var, params)
 
-    target_values = T.fvector('target_output')
-    network_output = lasagne.layers.get_output(l_out).flatten()
-    cost = T.mean((network_output - target_values)**2)
-    # cost = lasagne.objectives.categorical_crossentropy(network_output, target_values)
-    # cost = cost.mean()
+    target_values = T.ivector('target_output')
+    network_output = lasagne.layers.get_output(l_out)
+    # cost = T.mean((network_output - target_values)**2)
+    cost = lasagne.objectives.categorical_crossentropy(network_output, target_values)
+    cost = cost.mean()
 
     all_params = lasagne.layers.get_all_params(l_out)
-    updates = lasagne.updates.adagrad(
-        cost, all_params, params['LEARNING_RATE'])
+
+    updates = lasagne.updates.nesterov_momentum(
+            cost, all_params, learning_rate=params['LEARNING_RATE'], momentum=0.9)
 
     pred = theano.function([input_var], network_output,
                            allow_input_downcast=True)
@@ -523,18 +532,6 @@ def getLSTM(params, filename):
         np.save("./models/" + str(params), all_param_values)
 
     return pred
-
-
-def getlstm():
-    pass
-
-
-def getboth():
-    pass
-
-
-def getrnnboost():
-    pass
 
 
 # The rule based address extractor... hard-coded but still a gem...

@@ -578,7 +578,7 @@ def iterate_minibatches(inputs, targets, batchsize, NUM_FEATURES, SEQ_LENGTH=Non
         X = np.zeros((batchsize * (batches), SEQ_LENGTH, num_feat))
         y = np.zeros((batchsize * batches * SEQ_LENGTH, ))
 
-        for i in range(len(X) - SEQ_LENGTH):
+        for i in range(len(inputs) - SEQ_LENGTH):
             X[i / SEQ_LENGTH, :, :] = inputs[i: i + SEQ_LENGTH]
             # for SEQ_LENGTH number of records, append a target value
             y[i / SEQ_LENGTH] = targets[i]

@@ -78,3 +78,5 @@ Changed the weights of the streets... 1000 is too much
 1th July:- The poly features 5 sequence RNN is working fine... it get a good verification error but still cant classify as well... will work in the idea of separating the classification of different parts of the address as it in that ACM paper
 
 12th July:- starting first with the TSNE analysis of that different label idea before implementing it
+
+13th July:- Implemented the cross-categorical classifier... will try that for further tests...

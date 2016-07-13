@@ -99,7 +99,10 @@ def rnn(input_var, params):
         only_return_final=True, backwards=True)
 
     l_concat = lasagne.layers.ConcatLayer([l_forward, l_backward])
-    l_out = lasagne.layers.DenseLayer(l_concat, num_units=5,
+    l_preout = lasagne.layers.DenseLayer(l_concat, num_units=params['N_HIDDEN'],
+                                      nonlinearity=lasagne.nonlinearities.tanh)
+
+    l_out = lasagne.layers.DenseLayer(l_preout, num_units=5,
                                       nonlinearity=lasagne.nonlinearities.softmax)
 
     return l_out

@@ -10,8 +10,7 @@ import re
 from create_training import getvec
 
 eps = np.finfo(np.float32).eps
-eps = 0.001
-# will parse the page only once
+eps = 0
 
 
 def parsePage(url):
@@ -180,12 +179,16 @@ def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
         for i in range(len1):
             data1[i] = np.array(getvec([paras[i]]))[:NUM_FEATURES]
 
+
         # scale data carefully
-        # data1 = preprocessing.scale(data1)
+        data1 = data1.T
+        data1[[0, 1, 2, 3, 5, 6]] = preprocessing.scale(data1[[0, 1, 2, 3, 5, 6]])
+        data1 = data1.T
+
 
         # need to polyfit here as well
-        poly = PolynomialFeatures(degree=2)
-        data1 = poly.fit_transform(data1)
+        # poly = PolynomialFeatures(degree=2)
+        # data1 = poly.fit_transform(data1)
 
         if SEQ_LENGTH / 2 > 0:
             num_feat = len(data1[0])
@@ -236,7 +239,7 @@ def load_dataset(X, y, wndw=1):
 
     # normalize the continuous valued columns except the 5th column
     X = X.T
-    X[[0, 1, 2, 3, 5, 6]] = preprocessing.minmax_scale(X[[0, 1, 2, 3, 5, 6]])
+    X[[0, 1, 2, 3, 5, 6]] = preprocessing.scale(X[[0, 1, 2, 3, 5, 6]])
     X = X.T
 
     X_train = X[:-1000]
@@ -246,8 +249,8 @@ def load_dataset(X, y, wndw=1):
     y_val = y[-1000:]
 
     # the cross-categorical cost function requires input in the range (0,1)
-    X[X < eps] = eps
-    X[X > 1 - eps] = 1 - eps
+    # X[X < eps] = eps
+    # X[X > 1 - eps] = 1 - eps
 
     if wndw / 2 > 0:
         num_feat = len(X[0])

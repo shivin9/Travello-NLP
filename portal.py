@@ -15,7 +15,6 @@ params = {'GRAD_CLIP': 100,
           'NUM_EPOCHS': 20,
           'LEARNING_RATE': 0.01,
           'N_HIDDEN': 512,
-          'PRINT_FREQ': 5,
           'NUM_FEATURES': 9,
           'BATCH_SIZE': 512,
           'NUM_CLUST': 3}
@@ -28,7 +27,6 @@ paramsold = {'BATCH_SIZE': 512,
              'NUM_EPOCHS': 20,
              'NUM_FEATURES': 8,
              'N_HIDDEN': 512,
-             'PRINT_FREQ': 5,
              'SEQ_LENGTH': 1,
              'TYPE': '1st classifier'}
 
@@ -40,7 +38,6 @@ paramslstm = {'BATCH_SIZE': 512,
               'NUM_EPOCHS': 10,
               'NUM_FEATURES': 8,
               'N_HIDDEN': 64,
-              'PRINT_FREQ': 5,
               'SEQ_LENGTH': 4,
               'TYPE': '2nd classifier'}
 
@@ -74,21 +71,36 @@ def post_form():
     url = request.form['text']
     start_time = time.time()
 
-    # an ensemble of 2 sNeural Network models
-    addresses = getAddress(url, [(paramsold, rnnModelold), (paramslstm, lstmmodel)])
-    print("addresses took {:.3f}s".format(time.time() - start_time))
+    # an ensemble of 2 Neural Network models
+    try:
+        addresses = getAddress(url, [(paramsold, rnnModelold), (paramslstm, lstmmodel)])
+        print("addresses took {:.3f}s".format(time.time() - start_time))
+    except:
+        return "{error: Cant retrieve address}"
 
     t1 = time.time()
-    titles = getTitle(url, addresses)
-    print("titles took {:.3f}s".format(time.time() - t1))
+
+    try:
+        titles = getTitle(url, addresses)
+        print("titles took {:.3f}s".format(time.time() - t1))
+    except:
+        return "{error: Cant retrieve titles}"
 
     t2 = time.time()
-    images = getImg(url)
-    print("images took {:.3f}s".format(time.time() - t2))
+
+    try:
+        images = getImg(url)
+        print("images took {:.3f}s".format(time.time() - t2))
+    except:
+        return "{error: Cant retrieve images}"
 
     t3 = time.time()
-    str_to_return = consolidateStuff(url, titles, addresses, images)
-    print("consolidation took {:.3f}s".format(time.time() - t3))
+    try:
+        str_to_return = consolidateStuff(url, titles, addresses, images)
+        print("consolidation took {:.3f}s".format(time.time() - t3))
+    except:
+        return "{error: Cant consolidate the final information}"
+
 
     print str_to_return
     str_to_return = str_to_return.replace('\n', '<br>')

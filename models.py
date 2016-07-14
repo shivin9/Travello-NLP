@@ -85,14 +85,14 @@ def rnn(input_var, params):
         l_in, params['N_HIDDEN'], grad_clipping=params['GRAD_CLIP'],
         W_in_to_hid=lasagne.init.HeUniform(),
         W_hid_to_hid=lasagne.init.HeUniform(),
-        nonlinearity=lasagne.nonlinearities.tanh, only_return_final=True)
+        nonlinearity=lasagne.nonlinearities.tanh)
 
     l_backward = lasagne.layers.RecurrentLayer(
         l_in, params['N_HIDDEN'], grad_clipping=params['GRAD_CLIP'],
         W_in_to_hid=lasagne.init.HeUniform(),
         W_hid_to_hid=lasagne.init.HeUniform(),
         nonlinearity=lasagne.nonlinearities.tanh,
-        only_return_final=True, backwards=True)
+        backwards=True)
 
     l_concat = lasagne.layers.ConcatLayer([l_forward, l_backward])
     l_out = lasagne.layers.DenseLayer(l_concat, num_units=params['SEQ_LENGTH'],

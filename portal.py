@@ -74,7 +74,7 @@ def post_form():
     url = request.form['text']
     start_time = time.time()
 
-    # an ensemble of 2 Neural Network models
+    # an ensemble of 2 sNeural Network models
     addresses = getAddress(url, [(paramsold, rnnModelold), (paramslstm, lstmmodel)])
     print("addresses took {:.3f}s".format(time.time() - start_time))
 

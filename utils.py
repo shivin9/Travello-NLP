@@ -51,9 +51,10 @@ def consolidateStuff(url, titles, addresses, images):
     lens = [len(p) for p in paragraphs]
     jsonoutput = {}
     posspara = LongParas(lens)
+    titles = [paradict[t] for t in titles]
 
     if 'tripadvisor' in url:
-        jsonoutput[0] = {'Place Name': paragraphs[0],
+        jsonoutput[0] = {'Place Name': paragraphs[-1],
                       'Write-up': paragraphs[posspara[0]],
                       'Address': addresses
                       }

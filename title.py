@@ -6,11 +6,31 @@ import re
 NUM_CLUSTERS = 2
 
 
-def getTitle(url, addresses=[[1, 2, 3, 4]]):
+def getTitle(url, addresses):
+    '''
+    Finds all the titles or headings on the webpage. We use locality arguments to
+    find the titles which are actually the name of a point of interest
+
+    Parameters
+    ----------
+    url : The url of the page
+
+    addresses : This is a list addresses which were extracted by the address extractor
+
+    Returns
+    -------
+    headers : A list of all the 'possible' place names on the webpage. No guarantees!
+    But recall is 100%, precision is not ie. you get all the gold but along with
+    some mud as well
+    '''
+
     soup, paragraphs, paradict = parsePage(url)
     lens = [len(p) for p in paragraphs]
+
+    # Note that although the functions return the headers and addresses etc. in
+    # text, internally they play around with their indices as it is easier to apply
+    # locality arguments on them
     headerIndices = []
-    print len(addresses)
 
     # separate method for ladyironchef.com
     if 'ladyironchef' in url:
@@ -20,17 +40,19 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
     elif 'tripadvisor' in url:
         headerIndices = TripAdTitle(soup, paradict)
 
+    # there are blogs and pages which have only one point of interest, so for
+    # them we have a special function which for now just returns back the page title
     elif len(addresses) <= 3:
         # onetitle = getoneheader(soup, possibleHeaders, paragraphs)
         headerIndices = [-1]
 
+    # this implies that most probably page is a multi-place blog
     else:
-        # in a few rare cases the title of page can be under <Hn> inside the page also
-        # header_titles = [soup.findAll('h'+str(i)) for i in range(1, 5)]
-        # header_titles.append(soup.findAll('strong'))
         possibleHeaders = GenPage(soup, paradict)
-        # this implies that most probably page is a multi-place blog
-        # get the long write-ups about the headings
+
+        # get the long write-ups about the headings. they will help us find the 'real'
+        # headers as 'real' headers will have a long write-up about that place nearby
+        # most probably to it's down
         posspara = LongParas(lens)
 
         # generate indices for addresses, they are the first line of address
@@ -72,14 +94,28 @@ def getTitle(url, addresses=[[1, 2, 3, 4]]):
         for idx in reqindices:
             headerIndices.append(possibleHeaders[idx])
 
-    print "printing titles"
+    headers = []
     for idx in headerIndices:
-        print paragraphs[idx]
+        headers.append(paragraphs[idx])
 
-    return headerIndices
+    return headers
 
 
 def LICTitle(soup, paradict):
+    '''
+    Special function for LadyIronChef as all the headings are under the
+    span tag.
+
+    Parameters
+    ----------
+    soup : The soup of that page
+
+    paradict : The dictionary mapping paragraphs to their indices
+
+    Returns
+    -------
+    headers : A list of indices of the headers
+    '''
     tags = soup.findAll('span', {"style": "font-size: x-large;"})
     titles = []
 
@@ -96,11 +132,34 @@ def LICTitle(soup, paradict):
         if len(str1) > 2:
             titles.append(str1)
 
-    return [paradict[t] for t in titles]
+    headers = [paradict[t] for t in titles]
+    return headers
 
 
 def TripAdTitle(soup, paradict):
+    '''
+    Special function for TripAdvisor as it has only one point of interest per page.
+    The title is usually like
+
+    Rhubarb, Singapore - Chinatown - Restaurant Reviews, Phone Number &amp; Photos - TripAdvisor
+
+    And therefore we break the title of the page by punctuation marks and return
+    the first segment
+
+
+    Parameters
+    ----------
+    soup : The soup of that page
+
+    paradict : The dictionary mapping paragraphs to their indices
+
+    Returns
+    -------
+    headers : A list of indices of the headers
+    '''
+
     page_title = soup.findAll("title")[0].get_text().encode('ascii', 'ignore')
+
     for i in range(len(page_title)):
         if page_title[i] in string.punctuation:
             break
@@ -130,9 +189,27 @@ def GenPage(soup, paradict):
 
 def getHeadFeatures(headers, addresses, possparas):
     '''
-        headers: the indices of the possible headers on the page
-        addresses: the indices of the first line of address on the page
-        posspara: the indices of the long paragraphs/write-ups on the page
+    headers: the indices of the possible headers on the page
+    addresses: the indices of the first line of address on the page
+    posspara: the indices of the long paragraphs/write-ups on the page
+    we use locality arguments with addresses also. Headers with an address
+    nearby and that too to it's bottom is authentic as this is what the
+    general structure of most blogs and webpages tends to be
+
+    Parameters
+    ----------
+    headers : Indices of possible headers
+
+    addresses : A list of indices of the first line of an address which for one-liners
+        is the address itself and for hierarchical addresses is the first line
+
+    possparas : A list of indices of long paragraphs ie. write-ups about a place of interest
+
+    Returns
+    -------
+    out : A list numbers which act as the feature values for every possible header.
+        It is the sum of distances of the header to the nearest write-up and
+        the address. Positive value means that the headers is likely to be authentic.
     '''
     out = []
     for header in headers:
@@ -141,10 +218,22 @@ def getHeadFeatures(headers, addresses, possparas):
         distaddr = min(addresses - header,
                        key=lambda x: x if x > 0 else float('inf'))
         out.append(distpara + distaddr)
-    return np.array(out)
+    out = np.array(out)
+    return out
 
 
 def onlyNumbers(teststr):
+    '''
+    Tests whether a string is only numbers
+
+    Parameters
+    ----------
+    teststr : The string which is to be tested
+
+    Returns
+    -------
+    A boolean variable True/False
+    '''
     re1 = re.compile('.*[0-9].*')
     re2 = re.compile('.*[a-z].*|.*[A-Z].*')
     if bool(re1.match(teststr)) and not re2.match(teststr):

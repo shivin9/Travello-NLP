@@ -309,8 +309,10 @@ def getRNN(params, filename=None):
     print "loading data..."
 
     # the simple rnn works with a single window
-    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, wndw=params['SEQ_LENGTH'])
-    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, wndw=params['SEQ_LENGTH'])
+    X_train1, y_train1, X_val1, y_val1 = load_dataset(
+        X1, y1, wndw=params['SEQ_LENGTH'])
+    X_train2, y_train2, X_val2, y_val2 = load_dataset(
+        X2, y2, wndw=params['SEQ_LENGTH'])
 
     input_var = T.ftensor3('input_var')
     l_out = rnn(input_var, params)
@@ -452,8 +454,10 @@ def getLSTM(params, filename):
     '''
 
     print "loading data..."
-    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, wndw=params['SEQ_LENGTH'])
-    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, wndw=params['SEQ_LENGTH'])
+    X_train1, y_train1, X_val1, y_val1 = load_dataset(
+        X1, y1, wndw=params['SEQ_LENGTH'])
+    X_train2, y_train2, X_val2, y_val2 = load_dataset(
+        X2, y2, wndw=params['SEQ_LENGTH'])
 
     input_var = T.ftensor3('input_var')
     l_out = lstm(input_var, params)
@@ -604,7 +608,8 @@ def rulEx(paragraphs):
      The first entry in the tuple is the paragraph and the second entry is it's index.
     '''
 
-    # create a list where each element is the number of tokens in that paragraph
+    # create a list where each element is the number of tokens in that
+    # paragraph
     lens = [len(st.tokenize(p)) for p in paragraphs]
 
     # regular expression for finding out phone numbers... can't generalize but still
@@ -632,7 +637,8 @@ def rulEx(paragraphs):
                 poss.append((paragraphs[temp].encode("ascii"), temp))
                 temp -= 1
 
-            # address cant be that long ie. there can't be a 15 line long address
+            # address cant be that long ie. there can't be a 15 line long
+            # address
             if len(poss) <= 15:
                 possible_addresses += poss
 
@@ -641,40 +647,94 @@ def rulEx(paragraphs):
 
 def iterate_minibatches(inputs, targets, batchsize, NUM_FEATURES, SEQ_LENGTH=None,
                         CONV=None, shuffle=False):
+    '''
+    This function is used to iterate through the minibatches when training
+    or validating the network. Note that the classifiers expect a sequence of
+    datapoints to be classified.
+    So for addresses we are for an address at index i(say) providing
+
+    [paragraph[i - SEQ_LENGTH/2],
+    paragraph[i - SEQ_LENGTH/2 + 1],
+    ...,
+    paragraph[i],
+    ...,
+    paragraph[i + SEQ_LENGTH/2 - 1,
+    paragraph[i + SEQ_LENGTH/2]] ... ie. for the paragraph being classified we are
+    providing it's past and future as well so that the RNN can learn the pattern
+
+    This is true for both RNN and LSTM
+
+    Parameters
+    ----------
+    inputs : array, shape = [n_samples, n_dimensions]
+        It is the input array through which we have to iterate
+
+    targets : array, shape= [n_samples, ]
+        The class of a particular datapoint 0/1 ie. address or not
+
+    batchsize : Size of the batch while training or validating
+
+    NUM_FEATURES : The number of features which we actually want to consider. The
+        input may be high dimensional but we may want to take only the first k dimensions
+
+    SEQ_LENGTH : The length of the sequence given to the RNN or the LSTM
+
+    CONV : Expecially for the Convolution Neural Network. It is the parameter
+        (BATCH_SIZE, 1, CONV, NUM_FEATURES) in the 4D Tensor given
+        to the Conv. NN as input
+
+    shuffle : A boolean variable indicating whether we want to shuffle the inputs or not
+
+    Returns
+    -------
+    batch : The tuple (input, targets) where
+        input.shape = (batchsize, SEQ_LENGTH, NUM_FEATURES) and
+        targets.shape = (batchsize, 1)
+    '''
+
     assert len(inputs) == len(targets)
     num_feat = NUM_FEATURES
+
+    # if RNN or LSTM being used
     if SEQ_LENGTH:
+        # to be calculated carefully
         batches = len(inputs) / (batchsize) + 1
         X = np.zeros((batchsize * (batches), SEQ_LENGTH, num_feat))
         y = np.zeros((batchsize * batches))
 
         for i in range(len(inputs)):
-            # to generate rolling data. We get SEQ_LENGTHs vectors and flatten
-            # them
-            X[i / SEQ_LENGTH, i % SEQ_LENGTH, :] = inputs[i: i + SEQ_LENGTH].flatten()[:num_feat]
-            y[i] = targets[i]
+            # to generate rolling data we select SEQ_LENGTH input vectors starting from
+            # i to i + SEQ_LENGTH.
+            # Note that inputs are 0 vector padded so automatically the first
+            # entry in X ie X[0] will be the correct rolling sequence for the
+            # actual first element of input ie. the SEQ_LENGTHth element.
+            # eg. if SEQ_LENGTH = 5, then inputs is padded with 2 zero vectors
+            # on the top and bottom.
+            # For i = 0, X[0] will be [[0,...,0], [0,...,0], [1st feature vector],
+            # [1st feature vector], [2nd feature vector], [3rd feature vector]]
+            # which is what we actually wanted
+
+            X[i / SEQ_LENGTH, :, :] = inputs[i: i + SEQ_LENGTH][:, range(num_feat)]
+            y[i / SEQ_LENGTH] = targets[i]
 
         for i in range(batches):
             yield X[i * batchsize: (i + 1) * batchsize], y[i * batchsize: (i + 1) * batchsize]
 
+    # similar code for CONV also. Now instead of SEQ_LENGTH the same role is
+    # being played by CONV variable. Note that the CNN expects a 4D input vector
     elif CONV:
         batches = len(inputs) / (batchsize * CONV) + 1
         X = np.zeros((batchsize * (batches), 1, CONV, num_feat))
-        y = np.zeros((batchsize * (batches), CONV))
+        y = np.zeros((batchsize * (batches)))
 
         for i in range(len(inputs)):
             X[i / CONV, 0, i % CONV, :] = inputs[i][:num_feat]
-            y[i / CONV, i % CONV] = targets[i]
+            y[i / CONV] = targets[i]
 
         for i in range(batches):
             yield X[i * batchsize: (i + 1) * batchsize], y[i * batchsize: (i + 1) * batchsize]
 
-        # start_idx = 0
-        # while start_idx < len(inputs):
-        #     for i in range(batchsize):
-        #         data2 = np.zeros(batchsize, SEQ_LENGTH, num_feat)
-        #         data2[i/start_idx, i % SEQ_LENGTH, :] = data1[i]
-
+    # else case is for normal MLP's so no tension of sequences...
     else:
         if shuffle:
             indices = np.arange(len(inputs))

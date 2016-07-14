@@ -73,7 +73,8 @@ def post_form():
 
     # an ensemble of 2 Neural Network models
     try:
-        addresses = getAddress(url, [(paramsold, rnnModelold), (paramslstm, lstmmodel)])
+        addresses = getAddress(
+            url, [(paramsold, rnnModelold), (paramslstm, lstmmodel)])
         print("addresses took {:.3f}s".format(time.time() - start_time))
     except:
         return "{error: Cant retrieve address}"
@@ -101,7 +102,6 @@ def post_form():
     except:
         return "{error: Cant consolidate the final information}"
 
-
     print str_to_return
     str_to_return = str_to_return.replace('\n', '<br>')
     return str_to_return
@@ -111,7 +111,8 @@ def post_form():
 def json_data():
     url = request.args.get('url', 2)
     print url
-    addresses = getAddress(url, [(paramsold, rnnModelold), (params, rnnModel), (paramslstm, lstmmodel)])
+    addresses = getAddress(
+        url, [(paramsold, rnnModelold), (params, rnnModel), (paramslstm, lstmmodel)])
     titles = getTitle(url, addresses)
     images = getImg(url)
     str_to_return = consolidateStuff(url, titles, addresses, images)

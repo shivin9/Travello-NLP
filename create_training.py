@@ -206,20 +206,19 @@ def getvec(lines):
             zip codes?(6)
             length of paragraph(7)
             has date?(8)
-            separate feature for single words
-    '''
-    vec = [0] * 11
+        '''
+    vec = [0]*9
     for line in lines:
         phnum = len(reph.findall(line))
         nums = len(renum.findall(line))
         numterm = 0
 
         for terms in st.tokenize(line):
-            numterm += 1
+            numterm+=1
             # terms = terms.lower()
             if terms.lower() in streets:
                 vec[0] += 1
-                vec[4] += streets[terms.lower()] / summ
+                vec[4] += streets[terms.lower()]/float(summ)
 
             if terms in states:
                 # state names are biased towards US and Australia addresses
@@ -234,12 +233,7 @@ def getvec(lines):
 
         vec[5] = phnum
         vec[6] = nums
-        vec[7] = 10 / float(numterm)
-        vec[9] = numterm
-
-        # to eliminate single terms
-        if numterm == 1:
-            vec[10] = 1
+        vec[7] = numterm
 
         matches = datefinder.find_dates(line, strict=True)
         try:

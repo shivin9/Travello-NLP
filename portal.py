@@ -30,7 +30,7 @@ paramsold = {'BATCH_SIZE': 512,
              'N_HIDDEN': 512,
              'PRINT_FREQ': 5,
              'SEQ_LENGTH': 1,
-             'TYPE': 'new feature1'}
+             'TYPE': '1st classifier'}
 
 paramslstm = {'BATCH_SIZE': 512,
               'GRAD_CLIP': 100,
@@ -39,16 +39,16 @@ paramslstm = {'BATCH_SIZE': 512,
               'NUM_CLUST': 3,
               'NUM_EPOCHS': 10,
               'NUM_FEATURES': 8,
-              'N_HIDDEN': 512,
+              'N_HIDDEN': 64,
               'PRINT_FREQ': 5,
               'SEQ_LENGTH': 4,
-              'TYPE': 'new feature1'}
+              'TYPE': '2nd classifier'}
 
 try:
     # print paramsold
     rnnModelold = getModel(paramsold, "rnnmodel-old")
 except:
-    print "couldn't create the model... enter a valid filename"
+    print "couldn't create the model... please correct the error"
 
 try:
     # print paramsold
@@ -57,11 +57,11 @@ except:
     print "couldn't create the model... enter a valid filename"
 
 
-# try:
-#     # print paramslstm
-#     lstmmodel = getModel(paramslstm, "lstmodel-old")
-# except:
-#     print "couldn't create the model... enter a valid filename"
+try:
+    # print paramslstm
+    lstmmodel = getModel(paramslstm, "lstmodel-old")
+except:
+    print "couldn't create the model... please correct the error"
 
 
 @app.route('/')
@@ -74,7 +74,8 @@ def post_form():
     url = request.form['text']
     start_time = time.time()
 
-    addresses = getAddress(url, [(paramsold, rnnModelold), (params, rnnModel)])
+    # an ensemble of 2 Neural Network models
+    addresses = getAddress(url, [(paramsold, rnnModelold), (paramslstm, lstmmodel)])
     print("addresses took {:.3f}s".format(time.time() - start_time))
 
     t1 = time.time()
@@ -98,7 +99,7 @@ def post_form():
 def json_data():
     url = request.args.get('url', 2)
     print url
-    addresses = getAddress(url, [(paramsold, rnnModelold), (params, rnnModel)])
+    addresses = getAddress(url, [(paramsold, rnnModelold), (params, rnnModel), (paramslstm, lstmmodel)])
     titles = getTitle(url, addresses)
     images = getImg(url)
     str_to_return = consolidateStuff(url, titles, addresses, images)
@@ -106,7 +107,4 @@ def json_data():
 
 
 if __name__ == '__main__':
-    app.config.set("HOST", "0.0.0.0"),
-    app.config.set("PORT", 9000)
     app.run()
-    # app.run(host='0.0.0.0', port=1728)

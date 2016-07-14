@@ -173,7 +173,7 @@ def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
         batches = len1 / (BATCH_SIZE * SEQ_LENGTH) + 1
         data1 = np.zeros((BATCH_SIZE * (batches) * SEQ_LENGTH, NUM_FEATURES))
         for i in range(len1):
-            data1[i] = np.array(getvec([paras[i]]))[:NUM_FEATURES]
+            data1[i] = np.array(getvec([paras[i]])[:NUM_FEATURES])
 
         data = np.zeros((BATCH_SIZE * (batches), SEQ_LENGTH, NUM_FEATURES))
         for i in range(len(data1)):
@@ -184,8 +184,7 @@ def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
         batches = len1 / BATCH_SIZE + 1
         data = np.zeros((batches * BATCH_SIZE, NUM_FEATURES))
         for i in range(len1):
-            data[i / BATCH_SIZE,
-                 :] = np.array(getvec([paras[i]]))[:NUM_FEATURES]
+            data[i / BATCH_SIZE, :] = np.array(getvec([paras[i]])[:NUM_FEATURES])
 
     return data
 
@@ -201,11 +200,10 @@ def getScores(pred, paras, params):
     return out
 
 
-def _load_dataset(X, y, wndw=1):
+def load_dataset(X, y, wndw=1):
     '''
         wndw is the window_size for buffering the input with 0 vectors
     '''
-    print "loading scaled data..."
     for i in range(len(X)):
         X[i] = np.array(X[i])
 

@@ -41,7 +41,7 @@ def getAddress(url, predictors):
             res = pred(X).flatten()
             addrs = getLabels(res, paras, params['NUM_CLUST'])
             # print addrs
-            results = results.union(addrs)
+            results = results.intersection(addrs)
             print getScores(pred, paras, params)
 
         # print results

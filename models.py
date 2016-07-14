@@ -1,4 +1,4 @@
-from utils import _load_dataset
+from utils import load_dataset
 from nltk.tokenize import TreebankWordTokenizer
 import re
 import time
@@ -147,8 +147,8 @@ def lstm(input_var, params):
 
 def getCNN(params, filename=None):
 
-    X_train1, y_train1, X_val1, y_val1 = _load_dataset(X1, y1)
-    X_train2, y_train2, X_val2, y_val2 = _load_dataset(X2, y2)
+    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1)
+    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2)
 
     input_var = T.tensor4('inputs')
     l_out = cnn(input_var, params)
@@ -273,8 +273,11 @@ def getCNN(params, filename=None):
 
 def getRNN(params, filename=None):
 
-    X_train1, y_train1, X_val1, y_val1 = _load_dataset(X1, y1, 3)
-    X_train2, y_train2, X_val2, y_val2 = _load_dataset(X2, y2, 3)
+    print "loading data..."
+
+    # the simple rnn works with a single window
+    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, wndw=params['SEQ_LENGTH'])
+    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, wndw=params['SEQ_LENGTH'])
 
     input_var = T.ftensor3('input_var')
     l_out = rnn(input_var, params)
@@ -291,7 +294,7 @@ def getRNN(params, filename=None):
                            allow_input_downcast=True)
 
     if filename:
-        print "Loading a previously saved model..."
+        print "Loading a previously saved " + params['NAME']
         all_param_values = np.load("./models/" + filename + '.npy')
 
         for i in range(len(all_param_values)):
@@ -397,8 +400,9 @@ def getRNN(params, filename=None):
 
 def getLSTM(params, filename):
 
-    X_train1, y_train1, X_val1, y_val1 = _load_dataset(X1, y1)
-    X_train2, y_train2, X_val2, y_val2 = _load_dataset(X2, y2)
+    print "loading data..."
+    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, wndw=params['SEQ_LENGTH'])
+    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, wndw=params['SEQ_LENGTH'])
 
     input_var = T.ftensor3('input_var')
     l_out = lstm(input_var, params)
@@ -416,7 +420,7 @@ def getLSTM(params, filename):
                            allow_input_downcast=True)
 
     if filename:
-        print "Loading a previously saved model..."
+        print "Loading a previously saved " + params['NAME']
         all_param_values = np.load("./models/" + filename + '.npy')
 
         for i in range(len(all_param_values)):

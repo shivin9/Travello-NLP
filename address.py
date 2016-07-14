@@ -185,7 +185,7 @@ def getLabels(scores, paragraphs, NUM_CLUST=2):
     # if it's score is less than 0.5(whimsically chosen) then we say
     # that there are no addresses on the page
     bestaddr = np.argmax(scores)
-    if res[bestaddr] < 0.5:
+    if scores[bestaddr] < 0.5:
         return []
 
     # segregate the paragraphs into 'NUM_CLUST' clusters

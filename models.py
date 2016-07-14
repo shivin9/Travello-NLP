@@ -19,6 +19,22 @@ from labels2 import y2
 
 
 def getModel(params, filename=None):
+    '''
+    Instantiates a learning model using the given parameters dictionary
+
+    Parameters
+    ----------
+    params : The parameters needed by the model in the form of a dictionary
+
+    filename : An optional parameter which is required when we want to load
+        a previously buildt model
+
+    Returns
+    -------
+    predictor : A predictor function using which we can get the labels for
+        the test data
+    '''
+
     if params['NAME'] == "RNN":
         predictor = getRNN(params, filename)
 
@@ -272,7 +288,24 @@ def getCNN(params, filename=None):
 
 
 def getRNN(params, filename=None):
+    '''
+    This function uses the parameters to fetch an RNN network and then trains it
+    if the user wants so. After training it saves the model in the ./models folder with the
+    name str(params) so that the model can be easily recognized and called.
+    Otherwise it can load a previously trained model and return the predicting function.
 
+    Parameters
+    ----------
+    params : The parameters needed by the model in the form of a dictionary
+
+    filename : An optional parameter which is required when we want to load
+        a previously buildt model
+
+    Returns
+    -------
+    predictor : A predictor function using which we can get the labels for
+        the test data
+    '''
     print "loading data..."
 
     # the simple rnn works with a single window
@@ -399,6 +432,24 @@ def getRNN(params, filename=None):
 
 
 def getLSTM(params, filename):
+    '''
+    This function uses the parameters to fetch an LSTM network and then trains it
+    if the user wants so. After training it saves the model in the ./models folder with the
+    name str(params) so that the model can be easily recognized and called.
+    Otherwise it can load a previously trained model and return the predicting function.
+
+    Parameters
+    ----------
+    params : The parameters needed by the model in the form of a dictionary
+
+    filename : An optional parameter which is required when we want to load
+        a previously buildt model
+
+    Returns
+    -------
+    predictor : A predictor function using which we can get the labels for
+        the test data
+    '''
 
     print "loading data..."
     X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, wndw=params['SEQ_LENGTH'])
@@ -537,25 +588,51 @@ def getrnnboost():
     pass
 
 
-# The rule based address extractor... hard-coded but still a gem...
 def rulEx(paragraphs):
+    '''
+    This was the first attempt to extract addresses using a hardcoded rule based address
+    extractor. Although it doesn't generalize to all types of addresses but still it
+    can retrieve the addresses which have a phone number at the end.
+
+    Parameters
+    ----------
+    paragraphs : The list of paragraphs in the webpage
+
+    Returns
+    -------
+    addresses : It returns a set of tuples similar to what the getLabels() function returns.
+     The first entry in the tuple is the paragraph and the second entry is it's index.
+    '''
+
+    # create a list where each element is the number of tokens in that paragraph
     lens = [len(st.tokenize(p)) for p in paragraphs]
+
+    # regular expression for finding out phone numbers... can't generalize but still
+    # good enough
     regexp = re.compile(
         r'\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}|([0-9]{3,4}[- ]){2}[0-9]{3,4}')
+
     possible_addresses = []
 
     # to retrieve addresses which have phone number at the end
     for idx in range(len(paragraphs)):
         if bool(regexp.search(paragraphs[idx])):  # and lens[idx] <= 9:
+
             # to collect lines above the phone number
             poss = []
+            # note that with appending of this paragraph, we have tackled the case of
+            # one-line addresses which have phone numbers at the end
             poss.append((paragraphs[idx], idx))
             temp = idx - 1
+
+            # backtrack from the phone number while the length of the paragraph is < 9
+            # as addresses are not that long. This is mainly for hierarchical addresses
+            # as they have phone numbers at the end.
             while lens[temp] <= 9:
                 poss.append((paragraphs[temp].encode("ascii"), temp))
                 temp -= 1
 
-            # address cant be that long
+            # address cant be that long ie. there can't be a 15 line long address
             if len(poss) <= 15:
                 possible_addresses += poss
 

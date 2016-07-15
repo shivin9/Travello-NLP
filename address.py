@@ -23,7 +23,7 @@ with open('./database/hard_data/countries.json', 'r') as f:
 
 def getAddress(url, predictors):
     '''
-    Find all the addresses on the web-page
+    Finds all the addresses on the web-page
 
     Parameters
     ----------
@@ -34,7 +34,7 @@ def getAddress(url, predictors):
 
     Returns
     -------
-    final : A list of lists, where every list contains the index of paragraph which are the
+    final : A list of lists, where every list contains the paragraph which are the
         part of the same address.
     '''
 

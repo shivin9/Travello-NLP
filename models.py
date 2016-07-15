@@ -54,8 +54,26 @@ def getModel(params, filename=None):
 
 
 def cnn(params, input_var=None):
-    # As a third model, we'll create a CNN of two convolution + pooling stages
-    # and a fully-connected hidden layer in front of the output layer.
+    '''
+    This method is used to create a CNN architecture which has a Convolution layer
+    followed by 2 dense layers.
+
+    Parameters
+    ----------
+    params : The parameters needed by the model in the form of a dictionary
+
+    input_var : It is tensor, appropriately shaped to indicate the input layer of the
+        format or shape in which the data will be fed to the network
+
+    Returns
+    -------
+    l_out : The output layer of the final Neural Network
+
+
+    References
+    ----------
+    https://github.com/Lasagne/Lasagne/blob/master/examples/mnist.py
+    '''
 
     # Input layer, as usual:
     network = lasagne.layers.InputLayer(shape=(params['BATCH_SIZE'], 1, params[
@@ -88,10 +106,34 @@ def cnn(params, input_var=None):
         num_units=params['CONV'],
         nonlinearity=lasagne.nonlinearities.softmax)
 
-    return network
+    network = l_out
+    return l_out
 
 
 def rnn(input_var, params):
+    '''
+    This method is used to create a RNN architecture which has one forward and
+    one backward Recurrent layer followed by a concatenate layer and finally a dense layer
+
+    Parameters
+    ----------
+    params : The parameters needed by the model in the form of a dictionary
+
+    input_var : It is tensor, appropriately shaped to indicate the input layer of the
+        format or shape in which the data will be fed to the network
+
+    Returns
+    -------
+    l_out : The output layer of the final Neural Network
+
+
+    References
+    ----------
+    https://github.com/Lasagne/Lasagne/blob/master/examples/recurrent.py - We have
+        removed the mask used in that neural network as in our application we have a
+        fixed sequence length
+    '''
+
     print "creating layers"
 
     l_in = lasagne.layers.InputLayer(shape=(params['BATCH_SIZE'], params[
@@ -118,7 +160,28 @@ def rnn(input_var, params):
 
 
 def lstm(input_var, params):
+    '''
+    This method is used to create a LSTM-NN architecture which has one forward and
+    one backward LSTM Recurrent layer followed by a sum layer and a reshape layer.
+    A dense layer follows then.
 
+    Parameters
+    ----------
+    params : The parameters needed by the model in the form of a dictionary
+
+    input_var : It is tensor, appropriately shaped to indicate the input layer of the
+        format or shape in which the data will be fed to the network
+
+
+    Returns
+    -------
+    l_out : The output layer of the final Neural Network
+
+
+    References
+    ----------
+    http://colinraffel.com/talks/hammer2015recurrent.pdf
+    '''
     l_in = lasagne.layers.InputLayer(shape=(params['BATCH_SIZE'], params[
                                      'SEQ_LENGTH'], params['NUM_FEATURES']), input_var=input_var)
 
@@ -162,6 +225,28 @@ def lstm(input_var, params):
 
 
 def getCNN(params, filename=None):
+    '''
+    This function uses the parameters to fetch a CNN network and then trains it
+    if the user wants so. After training it saves the model in the ./models folder with the
+    name str(params) so that the model can be easily recognized and called.
+    Otherwise it can load a previously trained model and return the predicting function.
+
+    Parameters
+    ----------
+    params : The parameters needed by the model in the form of a dictionary
+
+    filename : An optional parameter which is required when we want to load
+        a previously buildt model
+
+    Returns
+    -------
+    predictor : A predictor function using which we can get the labels for
+        the test data
+
+
+    References
+    ----------
+    https://github.com/Lasagne/Lasagne/blob/master/examples/mnist.py    '''
 
     X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1)
     X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2)
@@ -305,10 +390,17 @@ def getRNN(params, filename=None):
     -------
     predictor : A predictor function using which we can get the labels for
         the test data
+
+
+    References
+    ----------
+    https://github.com/Lasagne/Lasagne/blob/master/examples/recurrent.py - We have
+        removed the mask used in that neural network as in our application we have a
+        fixed sequence length
     '''
     print "loading data..."
 
-    # the simple rnn works with a single window
+    # the simple rnn works with window size = 1
     X_train1, y_train1, X_val1, y_val1 = load_dataset(
         X1, y1, wndw=params['SEQ_LENGTH'])
     X_train2, y_train2, X_val2, y_val2 = load_dataset(
@@ -451,6 +543,11 @@ def getLSTM(params, filename):
     -------
     predictor : A predictor function using which we can get the labels for
         the test data
+
+
+    References
+    ----------
+    http://colinraffel.com/talks/hammer2015recurrent.pdf
     '''
 
     print "loading data..."

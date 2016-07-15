@@ -141,7 +141,7 @@ def json_data():
     start_time = time.time()
     # an ensemble of 2 Neural Network models
     try:
-    addresses = getAddress(
+        addresses = getAddress(
         url, [(paramsold, rnnModelold), (params, rnnModel), (paramslstm, lstmmodel)])
         print("addresses took {:.3f}s".format(time.time() - start_time))
     except:

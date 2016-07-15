@@ -105,9 +105,9 @@ def consolidateStuff(url, titles, addresses, images):
     # special consilidation for TripAdvisor
     if 'tripadvisor' in url:
         jsonoutput[0] = {'Place Name': paragraphs[-1],
-                      'Write-up': paragraphs[posspara[0]],
-                      'Address': addresses
-                      }
+                         'Write-up': paragraphs[posspara[0]],
+                         'Address': addresses
+                         }
 
     else:
         addrs = []
@@ -129,12 +129,21 @@ def consolidateStuff(url, titles, addresses, images):
                              'Address': addresses[onething[2]]
                              }
 
+    # choices is the array of stringified image tags which have everything from
+    # image-src to image-alt. Hope is that it will give a hint as to which place that
+    # image belongs to and using string similarity algorithms we will assign
+    # that placename to this image
+
     choices = [str(image) for image in images]
 
     for i in range(len(titles)):
+        # extractOne returns a tuple (imageName, similarity_score)
         rightImage = process.extractOne(jsonoutput[i]['Place Name'],
                                         choices)[0]
+
+        # we want the src attribute only
         imgurls = re.findall('img .*src="(.*?)"', rightImage)
+
         jsonoutput[i]['Image URL'] = imgurls[0]
 
     # print jsonoutput
@@ -164,13 +173,14 @@ def LongParas(lens):
     est.fit(res)
     labels = est.labels_
     # since the cluster numbers are randomly assigned, we need to find the cluster number
-    # the long paragraphs by finding out in which cluster the longest paragraph lies
+    # the long paragraphs by finding out in which cluster the longest
+    # paragraph lies
     bestpara = np.argmax(res)
     reqlabel = labels[bestpara]
 
-    # these are the possible paragraphs about the restaurants
+    # these are the possible paragraphs about the places of interest
     posspara = np.where(labels == reqlabel)[0]
-    # print "len(posspara) = " + str(len(posspara))
+
     return posspara
 
 
@@ -186,8 +196,8 @@ def findmin(arr):
     Returns
     -------
     The smallest non-negative number in arr
-
     '''
+
     maxx = np.max(arr)
     for i in range(len(arr)):
         if arr[i] < 0:
@@ -227,6 +237,18 @@ def getFull(headers, addresses, possparas):
 
 
 def process_url(raw_url):
+    '''
+    Method to replace the ' ' with '%20' as is the norm in urls
+
+    Parameters
+    ----------
+    raw_url : raw URL to be standardized
+
+    Returns
+    -------
+    raw_url : The modified URL
+    '''
+
     if ' ' not in raw_url[-1]:
         raw_url = raw_url.replace(' ', '%20')
 
@@ -237,9 +259,20 @@ def process_url(raw_url):
     return raw_url
 
 
-# get the images first and then join them later... required if
-# parallelized later
 def getImg(url):
+    '''
+    This function retrieves all the images on the webpage which are larger than 80x80
+    ie. icon size because larger images tend to be associated with a place-name.
+    TODO - Parallelize this method for better performance
+
+    Parameters
+    ----------
+    url : The url of the page
+
+    Returns
+    -------
+    images : An array of strings where each element is the <img> tag but stringified
+    '''
     opener = urllib2.build_opener()
     opener.addheaders = [
         ('User-agent',
@@ -247,6 +280,8 @@ def getImg(url):
 
     urlcontent = opener.open(url).read()
     soup = BeautifulSoup(urlcontent, "lxml")
+
+    # use soup to extract all the image tags
     images = soup.findAll("img")
 
     collected_images = []
@@ -254,8 +289,14 @@ def getImg(url):
     for image in images:
         try:
             imgurl = re.findall('img .*src="(.*?)"', str(image))[0]
+            # reject .svg images
             if imgurl[-3:] != "svg":
                 imgurl = process_url(imgurl)
+
+                # some pages have img tags where height and width attributes are missing
+                # so to choose valid images from that page we have to download all the images
+                # and choose those which have a length > 5000(works well in practice)
+                # Problem is that it can take time if the images are large in size
 
                 if 'height' in str(image) and 'width' in str(image):
                     if int(image['height']) > 80 and int(image['width']) > 80:
@@ -274,43 +315,124 @@ def getImg(url):
 
 
 # Can return the data in required shape
-def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
-    len1 = len(paras)
+def getData(paragraphs, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
+    '''
+    This method converts the webpage into a feature matrix which is then
+    be used by the classifier to find out addresses. It's sole use in the package
+    is in the getAddress method.
+
+    Parameters
+    ----------
+    paragraphs : The list of paragraphs on the webpage
+
+    NUM_FEATURES : Number of features we want to consider for a single paragraph.
+        Usually filled in by params['NUM_FEATURES']
+
+    BATCH_SIZE : Most classifiers usually take in input vectors in a batch as it is
+        faster. This parameter is fixed by params['BATCH_SIZE']
+
+    SEQ_LENGTH : The Recursive NN and the Long Short Term NN predict the label of a
+        data point by looking at some previous and some next data points.
+        This parameter decides how for into the past and the future should we look
+
+    Returns
+    -------
+    data : an array of shape=(batches, SEQ_LENGTH, NUM_FEATURES)
+    '''
+
+    len1 = len(paragraphs)
+
     if SEQ_LENGTH:
         batches = len1 / (BATCH_SIZE * SEQ_LENGTH) + 1
+
+        # this auxillary array is used an intermediate while reshaping the data. Right
+        # now the sequences are not separated and in the second pass we will separate it
+        # bad design... can be improved later
+
         data1 = np.zeros((BATCH_SIZE * (batches) * SEQ_LENGTH, NUM_FEATURES))
+
+        # we fill in data1 with feature vectors generated by the getvec() method
+        # in create_training file
         for i in range(len1):
             data1[i] = np.array(getvec([paras[i]])[:NUM_FEATURES])
 
+        ## bug here... Forgot to pad with 0s at the starting and the end
+        ## but still it is working fine with SEQ_LENGTH = 1 we
+        ## need no padding there
+
+        # the real array ie. with proper shape, which is to be returned
         data = np.zeros((BATCH_SIZE * (batches), SEQ_LENGTH, NUM_FEATURES))
         for i in range(len(data1)):
             data[i / SEQ_LENGTH, i % SEQ_LENGTH, :] = data1[i]
+
         del(data1)
 
+    # if SEQ_LENGTH is not used then it means that we are using a MLP and not RNN or LSTM
     else:
         batches = len1 / BATCH_SIZE + 1
         data = np.zeros((batches * BATCH_SIZE, NUM_FEATURES))
         for i in range(len1):
-            data[i / BATCH_SIZE, :] = np.array(getvec([paras[i]])[:NUM_FEATURES])
+            data[i / BATCH_SIZE,
+                 :] = np.array(getvec([paras[i]])[:NUM_FEATURES])
 
     return data
 
 
-def getScores(pred, paras, params):
-    X = getData(paras, params['NUM_FEATURES'], params[
+def getScores(pred, paragraphs, params):
+    '''
+    This is an auxillary method used to print the scores assigned by the classifier
+    to the paragraphs. Currently it only supports only RNN and LSTM.
+
+    Parameters
+    ----------
+    pred : The Theano function which can predict the labels of paragraphs
+
+    paragraphs : The list of paragraphs on the webpage
+
+    params : The parameters needed by the model in the form of a dictionary
+
+    Returns
+    -------
+    out : A list of tuples which has a paragraph and it's score as predicted by the
+        classifier
+    '''
+
+    X = getData(paragraphs, params['NUM_FEATURES'], params[
                 'BATCH_SIZE'], SEQ_LENGTH=params['SEQ_LENGTH'])
 
     res = pred(X).flatten()
     out = []
-    for i in range(len(paras)):
-        out.append((paras[i], res[i]))
+    for i in range(len(paragraphs)):
+        out.append((paragraphs[i], res[i]))
     return out
 
 
-def load_dataset(X, y, wndw=1):
+def load_dataset(X, y, SEQ_LENGTH=1):
     '''
-        wndw is the window_size for buffering the input with 0 vectors
+    This method takes in the data and breaks it into training and validation data.
+    Validation data consists of the last 1000 samples of the data
+    Then it buffers them with 0 vectors at the front and at the back depending on SEQ_LENGTH
+
+    Parameters
+    ----------
+    X : A list of shape=(n_samples, n_features)
+
+    y : A list of shape=(n_samples,)
+        The target labels for the paragraphs
+
+    SEQ_LENGTH : The window_size for buffering the input with 0 vectors
+
+    Returns
+    -------
+    X_train : Training data points
+
+    y_train : Labels of training data points
+
+    X_val : Validation data points
+
+    y_val : Labels of validation data points
     '''
+
     for i in range(len(X)):
         X[i] = np.array(X[i])
 
@@ -323,14 +445,15 @@ def load_dataset(X, y, wndw=1):
     X_val = X[-1000:]
     y_val = y[-1000:]
 
-    if wndw / 2 > 0:
+    if SEQ_LENGTH / 2 > 0:
         num_feat = len(X[0])
-        Xbuffer = np.zeros((wndw / 2, num_feat))
-        ybuffer = np.zeros((wndw / 2,))
+        Xbuffer = np.zeros((SEQ_LENGTH / 2, num_feat))
+        ybuffer = np.zeros((SEQ_LENGTH / 2,))
         X_train = np.vstack([Xbuffer, X_train, Xbuffer])
         X_val = np.vstack([Xbuffer, X_val, Xbuffer])
 
-        # append 0s at the front and the back of both training and testing labels
+        # append 0s at the front and the back of both training and testing
+        # labels
         y_train = np.append(ybuffer, y_train)
         y_train = np.append(y_train, ybuffer)
 

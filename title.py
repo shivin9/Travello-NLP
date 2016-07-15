@@ -169,6 +169,22 @@ def TripAdTitle(soup, paradict):
 
 
 def GenPage(soup, paradict):
+    '''
+    The general headers extractor function which finds the possible headers in a webpage
+    by extracting all those paragraphs which are in <Hn> or <strong> tags
+    Further filters need to be still applied to remove bogus headers
+
+    Parameters
+    ----------
+    soup : The soup of that page
+
+    paradict : The dictionary mapping paragraphs to their indices
+
+    Returns
+    -------
+    possheaders : A list of the indices of all the possible headers
+    '''
+
     headings = soup.findAll(re.compile('h[0-5]|strong'))
     possheaders = set()
     # to select the elements which have the maximum number of common tags-- failed idea
@@ -179,11 +195,14 @@ def GenPage(soup, paradict):
         head = head.replace('\t', '')
         head = head.replace('\n', '')
         head = head.strip()
+        # sometimes the head was found to be not in the paragraphs list
+        # therefore this check was added, also many a times only numbers were getting
+        # found so have removed them too
         if len(head) > 2 and (not onlyNumbers(head)) and head in paradict:
             possheaders.add(paradict[head])
 
+    # return the headers in a sorted order
     possheaders = sorted(list(possheaders))
-    # print "possheaders = " + str(possheaders)
     return possheaders
 
 

@@ -9,21 +9,49 @@ import re
 from create_training import getvec
 
 
-# will parse the page only once
 def parsePage(url):
+    '''
+    This method is very important and it used at many places in the package. It is used to
+    parse a page and extract relevant information from the page ie. the text and it creates
+    two other data structures which are helpful for other computations all throughout
+
+    Parameters
+    ----------
+    url : The url of the page
+
+    Returns
+    -------
+    soup : It is a BeautifulSoup object which has parsed the webpage are separated it based
+        on the html tags. For more information please refer to the BeautifulSoup library
+
+    paragraphs : It is a list of all the paragraphs on the webpage. Paragraphs are pieces
+        of text which are separated by '\n'. Throughout the documentation we have used the
+        term index of a paragraph which is nothing but it's index in this list
+
+    paradict : It is a python dictionary which stores the reverse of paragraphs ie. the
+        indices are referred to by the paragraphs which they index to
+    '''
+
     opener = urllib2.build_opener()
+    # this header is important as many websites detect that the request is coming from
+    # a python bot and they reject the request. This header is to make the request look
+    # as if it's coming from an authentic browser
     opener.addheaders = [
         ('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
     response = opener.open(url)
     page = response.read()
     soup = BeautifulSoup(page, 'lxml')
 
+    # remove the styling and scripting tags
     for elem in soup.findAll(['script', 'style']):
         elem.extract()
 
     raw = soup.get_text().encode('ascii', 'ignore')
+
+    # page_title is the title of the page which is not present in raw
     page_title = soup.select("title")[0].get_text().encode(
         'ascii', 'ignore').strip().encode('ascii')
+
     paragraphs = []
 
     for p in raw.split('\n'):
@@ -34,25 +62,47 @@ def parsePage(url):
             paragraphs.append(p)
 
     paragraphs.append(page_title)
-    # lens can be computed on it's own
     paradict = {}
     for i in range(len(paragraphs)):
         if paragraphs[i] not in paradict:
             paradict[paragraphs[i]] = i
 
-    # special entry for the title of the page
+    # special entry for the page_title at the end of the list
     paradict[page_title] = -1
 
     return soup, paragraphs, paradict
 
 
 def consolidateStuff(url, titles, addresses, images):
+    '''
+    This method is used to 'glue' the correct titles, addresses, write-ups
+    and the images to form a blob of complete information about a particular point
+    of interest in the webpage
+
+    Parameters
+    ----------
+    url : The url of the page
+
+    titles : The data structure as returned by the getTitles method
+
+    addresses : The addresses as returned by the getAddress function. Note that
+        these addresses are already consolidated amongst themselves
+
+    images : The url of images as returned by the getImage method.
+
+    Returns
+    -------
+    jsonoutput : A stringified dictionary where indices(starting from 0) repsesent another
+        dictionary indexed by 'Place Name', 'Write-up', 'Address' and 'Image URL'
+
+    '''
     soup, paragraphs, paradict = parsePage(url)
     lens = [len(p) for p in paragraphs]
     jsonoutput = {}
     posspara = LongParas(lens)
     titles = [paradict[t] for t in titles]
 
+    # special consilidation for TripAdvisor
     if 'tripadvisor' in url:
         jsonoutput[0] = {'Place Name': paragraphs[-1],
                       'Write-up': paragraphs[posspara[0]],
@@ -61,13 +111,16 @@ def consolidateStuff(url, titles, addresses, images):
 
     else:
         addrs = []
-        # the head of addresses
+
+        # the head of addresses as explained in the getTitles method
         for address in addresses:
             addrs.append(paradict[address[0]])
 
         addrs = np.array(addrs)
+
+        # to glue the titles, addresses and the write-ups to form a correct
+        # and complete blob of information
         fullThing = getFull(titles, addrs, posspara)
-        # print fullThing
 
         for i in range(len(fullThing)):
             onething = fullThing[i]
@@ -89,11 +142,29 @@ def consolidateStuff(url, titles, addresses, images):
 
 
 def LongParas(lens):
+    '''
+    This method returns the long write-ups in the webpage by clustering them into 2
+    clusters based on their lengths. Idea is that kmeans will separate the longer
+    paragraphs
+
+    Parameters
+    ----------
+    lens : A list where each element represents the length of that corresponding
+        paragraphs at that index
+
+    Returns
+    -------
+    posspara : A list of indices of the long paragraphs
+    '''
+
     res = np.array(lens)
+    # reshapre the res array to form a matrix of size (1, len(res))
     res = res.reshape(-1, 1)
     est = KMeans(n_clusters=2)
     est.fit(res)
     labels = est.labels_
+    # since the cluster numbers are randomly assigned, we need to find the cluster number
+    # the long paragraphs by finding out in which cluster the longest paragraph lies
     bestpara = np.argmax(res)
     reqlabel = labels[bestpara]
 
@@ -104,6 +175,19 @@ def LongParas(lens):
 
 
 def findmin(arr):
+    '''
+    This is a simple method to find the least non-negative number in an array. Could'nt
+    find an easier way to do this task and therefore had to write it in a new method
+
+    Parameters
+    ----------
+    arr : A numpy array
+
+    Returns
+    -------
+    The smallest non-negative number in arr
+
+    '''
     maxx = np.max(arr)
     for i in range(len(arr)):
         if arr[i] < 0:
@@ -112,12 +196,34 @@ def findmin(arr):
 
 
 def getFull(headers, addresses, possparas):
+    '''
+    A very small but important method which for every header(take note) and not the
+    address finds the appropriate address object and the write-up by using loaclity
+    arguments described elsewhere. Now we can appreciate the passing of header and address
+    information by their indices rather than the text itself
+
+    Parameters
+    ----------
+    headers : A list of indices of all the header paragraphs
+
+    addresses : A list of indices of all the first line of addresses... only first
+        line is needed as we will make locality arguments
+
+    possparas : A list of indices of all the write-ups
+
+    Returns
+    -------
+    blob : A list of shape=(number_of_pts_of_interests, 3) (Hopefully!)
+        Each element of blog is itself a list which has the indices of the header,
+        it's corresponding write-up and address
+    '''
     out = []
     for header in headers:
         parapos = findmin(possparas - header)
         addrpos = findmin(addresses - header)
         out.append([header, parapos, addrpos])
-    return np.array(out)
+    blob = np.array(out)
+    return blob
 
 
 def process_url(raw_url):

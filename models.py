@@ -297,6 +297,10 @@ def getRNN(params, filename=None):
     cost = lasagne.objectives.categorical_crossentropy(network_output, target_values)
     cost = cost.mean()
 
+    acc = T.mean(T.eq(T.argmax(network_output, axis=1), target_values),
+        dtype=theano.config.floatX)
+
+
     all_params = lasagne.layers.get_all_params(l_out)
 
     updates = lasagne.updates.nesterov_momentum(
@@ -321,8 +325,11 @@ def getRNN(params, filename=None):
 
         train = theano.function([input_var, target_values],
                                 cost, updates=updates, allow_input_downcast=True)
-        validate = theano.function(
-            [input_var, target_values], cost, allow_input_downcast=True)
+
+        validate = theano.function([input_var, target_values], [cost, acc],
+                                    allow_input_downcast=True)
+
+        print('training the ' + params['NAME'])
 
         old_valerr = [10, 10]
 
@@ -357,9 +364,9 @@ def getRNN(params, filename=None):
             for batch in iterate_minibatches(X_val1, y_val1, params['BATCH_SIZE'],
                                              params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
                 inputs, targets = batch
-                err = validate(inputs, targets)
+                err, acc = validate(inputs, targets)
                 val_err += err
-                # val_acc += acc
+                val_acc += acc
                 val_batches += 1
 
             # Then we print the results for this epoch:
@@ -368,7 +375,7 @@ def getRNN(params, filename=None):
             print("  training loss:\t\t{:.6f}".format(
                 train_err / train_batches))
             print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
-            # print("  validation accuracy:\t\t{:.2f} %".format(val_acc/val_batches * 100))
+            print("  validation accuracy:\t\t{:.2f} %".format(val_acc/val_batches * 100))
 
             # to prevent overfitting
             # or val_err - old_valerr[0] < 0.001:
@@ -389,9 +396,9 @@ def getRNN(params, filename=None):
             for batch in iterate_minibatches(X_val2, y_val2, params['BATCH_SIZE'],
                                              params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
                 inputs, targets = batch
-                err = validate(inputs, targets)
+                err, acc = validate(inputs, targets)
                 val_err += err
-                # val_acc += acc
+                val_acc += acc
                 val_batches += 1
 
             # Then we print the results for this epoch:
@@ -400,7 +407,7 @@ def getRNN(params, filename=None):
             print("  training loss:\t\t{:.6f}".format(
                 train_err / train_batches))
             print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
-            # print("  validation accuracy:\t\t{:.2f} %\n".format(val_acc/val_batches * 100))
+            print("  validation accuracy:\t\t{:.2f} %\n".format(val_acc/val_batches * 100))
             old_valerr[1] = val_err
 
         print "saving the parameters..."

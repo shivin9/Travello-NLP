@@ -71,22 +71,26 @@ def generate_data():
         y += [0]*gnum1
 
         # probabilistically append the restaurant name
-        if rnum > 0.6:
-            temp += random.sample(cafes, 1)
-            y += [0]
+        # if rnum > 0.6:
+        #     temp += random.sample(cafes, 1)
+        #     y += [0]
 
         # necessarily append the address1
         temp.append(addrs[i]['address']['address1'].encode('ascii', 'ignore'))
+        y += [1]
         cnt += 1
         if rnum > 0.05:
             temp.append(addrs[i]['address']['city'].encode('ascii', 'ignore')+", "+addrs[i]['address']['state'].encode('ascii', 'ignore')+", "+addrs[i]['address']['postalCode'].encode('ascii', 'ignore'))
+            y += [2]
             cnt += 1
 
             # dont put phone numbers in all cases as then it will learn that only
             if rnum > 0.6 and 'phone' in addrs[i]:
                 temp.append(addrs[i]['phone'].encode('ascii', 'ignore'))
+                y += [3]
                 cnt += 1
-        y += [1]*cnt
+
+        # y += [1]*cnt
         temp += random.sample(garbage, gnum2)
         y += [0]*gnum2
         labels1.append(y)
@@ -145,9 +149,9 @@ def oneliners():
             gnum1 = int(random.gauss(10, 5))
             gnum2 = int(random.gauss(10, 5))
 
-        if rnum > 0.6:
-            temp += random.sample(cafes, 1)
-            y1 += [1]
+        # if rnum > 0.6:
+        #     temp += random.sample(cafes, 1)
+        #     y1 += [1]
 
         temp += random.sample(garbage, gnum1)
         y1 += [0]*gnum1
@@ -166,7 +170,7 @@ def oneliners():
         temp.append(str1)
         temp += random.sample(garbage, gnum2)
         # print temp
-        y1 += [1]
+        y1 += [4]
         y1 += [0]*gnum2
         lengths2.append(len(y1))
         labels2.append(y1)
@@ -210,22 +214,24 @@ def getvec(lines):
             number of streets(0), cities(1), states(2), countries(3) of current
             sum of weights of the streets(4)
             has phone number?(5)
-            number of numbers(6)
+            zip codes?(6)
             length of paragraph(7)
             has date?(8)
+            1/length of paragraphs(9)
+            separate feature for single words(10)
     '''
-    vec = [0]*8
+    vec = [0] * 11
     for line in lines:
         phnum = len(reph.findall(line))
         nums = len(renum.findall(line))
         numterm = 0
 
         for terms in st.tokenize(line):
-            numterm+=1
+            numterm += 1
             # terms = terms.lower()
             if terms.lower() in streets:
                 vec[0] += 1
-                vec[4] += streets[terms.lower()]/float(summ)
+                vec[4] += streets[terms.lower()] / summ
 
             if terms in states:
                 # state names are biased towards US and Australia addresses
@@ -238,17 +244,24 @@ def getvec(lines):
             if terms in countries:
                 vec[3] += 1
 
-        vec[5] = phnum
-        vec[6] = nums
-        vec[7] = numterm
+        vec[5] = 10 / float(numterm)
+        vec[6] = numterm
 
-        # matches = datefinder.find_dates(line, strict=True)
-        # try:
-        #     for match in matches:
-        #         vec[8] = 1
-        #         break
-        # except:
-        #     pass
+        ### binary features start from here
+        vec[7] = phnum
+        vec[8] = nums
+
+        # to eliminate single terms
+        if numterm == 1:
+            vec[10] = 1
+
+        matches = datefinder.find_dates(line, strict=True)
+        try:
+            for match in matches:
+                vec[9] = 1
+                break
+        except:
+            pass
     return vec
 
 

@@ -329,8 +329,6 @@ def getRNN(params, filename=None):
         validate = theano.function([input_var, target_values], [cost, acc],
                                     allow_input_downcast=True)
 
-        print('training the ' + params['NAME'])
-
         old_valerr = [10, 10]
 
         for epoch in range(params['NUM_EPOCHS']):
@@ -581,14 +579,14 @@ def iterate_minibatches(inputs, targets, batchsize, NUM_FEATURES, SEQ_LENGTH=Non
     if SEQ_LENGTH:
         # calculate the number of batches in which inputs has to broken up
         # depending on the BATCH_SIZE
-        batches = len(inputs) / (batchsize * SEQ_LENGTH) + 1
+        batches = len(inputs) / batchsize + 1
         X = np.zeros((batchsize * (batches), SEQ_LENGTH, num_feat))
-        y = np.zeros((batchsize * batches * SEQ_LENGTH, ))
+        y = np.zeros((batchsize * batches, ))
 
         for i in range(len(inputs) - SEQ_LENGTH):
-            X[i / SEQ_LENGTH, :, :] = inputs[i: i + SEQ_LENGTH]
+            X[i, :, :] = inputs[i: i + SEQ_LENGTH]
             # for SEQ_LENGTH number of records, append a target value
-            y[i / SEQ_LENGTH] = targets[i]
+            y[i] = targets[i]
 
         for i in np.arange(batches):
             yield X[i * batchsize: (i + 1) * batchsize], y[i * batchsize: (i + 1) * batchsize]

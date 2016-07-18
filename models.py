@@ -402,9 +402,9 @@ def getRNN(params, filename=None):
 
     # the simple rnn works with window size = 1
     X_train1, y_train1, X_val1, y_val1 = load_dataset(
-        X1, y1, wndw=params['SEQ_LENGTH'])
+        X1, y1, SEQ_LENGTH=params['SEQ_LENGTH'])
     X_train2, y_train2, X_val2, y_val2 = load_dataset(
-        X2, y2, wndw=params['SEQ_LENGTH'])
+        X2, y2, SEQ_LENGTH=params['SEQ_LENGTH'])
 
     input_var = T.ftensor3('input_var')
     l_out = rnn(input_var, params)
@@ -552,9 +552,9 @@ def getLSTM(params, filename):
 
     print "loading data..."
     X_train1, y_train1, X_val1, y_val1 = load_dataset(
-        X1, y1, wndw=params['SEQ_LENGTH'])
+        X1, y1, SEQ_LENGTH=params['SEQ_LENGTH'])
     X_train2, y_train2, X_val2, y_val2 = load_dataset(
-        X2, y2, wndw=params['SEQ_LENGTH'])
+        X2, y2, SEQ_LENGTH=params['SEQ_LENGTH'])
 
     input_var = T.ftensor3('input_var')
     l_out = lstm(input_var, params)

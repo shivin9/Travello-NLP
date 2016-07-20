@@ -223,7 +223,7 @@ def getScores(pred, paras, params):
     return out
 
 
-def load_dataset(X, y, wndw=1):
+def load_dataset(X, y, NUM_FEATURES, wndw=1):
     '''
         wndw is the window_size for buffering the input with 0 vectors
     '''
@@ -240,6 +240,7 @@ def load_dataset(X, y, wndw=1):
     # normalize the continuous valued columns except the 5th column
     X = X.T
     X[[0, 1, 2, 3, 5, 6]] = preprocessing.scale(X[[0, 1, 2, 3, 5, 6]])
+    X = X[:NUM_FEATURES]
     X = X.T
 
     X_train = X[:-1000]

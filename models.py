@@ -155,8 +155,8 @@ def lstm(input_var, params):
 def getCNN(params, filename=None):
 
     print "loading data..."
-    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1)
-    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2)
+    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEAT'])
+    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEAT'])
 
     input_var = T.tensor4('inputs')
     l_out = cnn(input_var, params)
@@ -200,7 +200,8 @@ def getCNN(params, filename=None):
             old_netout = l_out
             start_time = time.time()
 
-            for batch in iterate_minibatches(X_train1, y_train1, params['BATCH_SIZE'], params['NUM_FEATURES'], SEQ_LENGTH=None, CONV=8, shuffle=False):
+            for batch in iterate_minibatches(X_train1, y_train1, params['BATCH_SIZE'],
+                                             SEQ_LENGTH=None, CONV=8, shuffle=False):
                 # if train_batches % 50 == 0:
                 #     print "batch number " + str(train_batches)
                 inputs, targets = batch
@@ -209,7 +210,6 @@ def getCNN(params, filename=None):
                 break
 
             for batch in iterate_minibatches(X_train2, y_train2, params['BATCH_SIZE'],
-                                             params['NUM_FEATURES'],
                                              SEQ_LENGTH=None, CONV=8, shuffle=False):
                 # if train_batches % 50 == 0:
                 #     print "batch number " + str(train_batches)
@@ -223,7 +223,6 @@ def getCNN(params, filename=None):
             val_batches = 0
 
             for batch in iterate_minibatches(X_val1, y_val1, params['BATCH_SIZE'],
-                                             params['NUM_FEATURES'],
                                              SEQ_LENGTH=None, CONV=8, shuffle=False):
                 inputs, targets = batch
                 err = validate(inputs, targets)
@@ -256,7 +255,7 @@ def getCNN(params, filename=None):
             val_batches = 0
 
             for batch in iterate_minibatches(X_val2, y_val2, params['BATCH_SIZE'],
-                                             params['NUM_FEATURES'], SEQ_LENGTH=None, CONV=8, shuffle=False):
+                                            SEQ_LENGTH=None, CONV=8, shuffle=False):
                 inputs, targets = batch
                 err = validate(inputs, targets)
                 val_err += err
@@ -282,11 +281,11 @@ def getCNN(params, filename=None):
 def getRNN(params, filename=None):
 
     print "loading data..."
-    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['SEQ_LENGTH'])
-    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['SEQ_LENGTH'])
+    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEAT'], params['SEQ_LENGTH'])
+    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEAT'], params['SEQ_LENGTH'])
 
     # the number of features may change if we expand the features using polynomial expansion
-    params['NUM_FEATURES'] = len(X_train1[0])
+    params['NUM_FEAT'] = len(X_train[0])
 
     input_var = T.ftensor3('input_var')
     l_out = rnn(input_var, params)
@@ -339,7 +338,7 @@ def getRNN(params, filename=None):
             start_time = time.time()
 
             for batch in iterate_minibatches(X_train1, y_train1, params['BATCH_SIZE'],
-                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
+                                             params['SEQ_LENGTH'], shuffle=False):
                 # if train_batches % 50 == 0:
                 #     print "batch number " + str(train_batches)
                 inputs, targets = batch
@@ -347,7 +346,7 @@ def getRNN(params, filename=None):
                 train_batches += 1
 
             for batch in iterate_minibatches(X_train2, y_train2, params['BATCH_SIZE'],
-                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
+                                             params['SEQ_LENGTH'], shuffle=False):
                 # if train_batches % 50 == 0:
                 #     print "batch number " + str(train_batches)
                 inputs, targets = batch
@@ -360,7 +359,7 @@ def getRNN(params, filename=None):
             val_batches = 0
 
             for batch in iterate_minibatches(X_val1, y_val1, params['BATCH_SIZE'],
-                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
+                                             params['SEQ_LENGTH'], shuffle=False):
                 inputs, targets = batch
                 err, acc = validate(inputs, targets)
                 val_err += err
@@ -392,7 +391,7 @@ def getRNN(params, filename=None):
             val_batches = 0
 
             for batch in iterate_minibatches(X_val2, y_val2, params['BATCH_SIZE'],
-                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
+                                             params['SEQ_LENGTH'], shuffle=False):
                 inputs, targets = batch
                 err, acc = validate(inputs, targets)
                 val_err += err
@@ -418,8 +417,8 @@ def getRNN(params, filename=None):
 def getLSTM(params, filename):
 
     print "loading data..."
-    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1)
-    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2)
+    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEAT'])
+    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEAT'])
 
     input_var = T.ftensor3('input_var')
     l_out = lstm(input_var, params)
@@ -466,7 +465,7 @@ def getLSTM(params, filename):
             start_time = time.time()
 
             for batch in iterate_minibatches(X_train1, y_train1, params['BATCH_SIZE'],
-                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
+                                             params['SEQ_LENGTH'], shuffle=False):
                 # if train_batches % 50 == 0:
                 #     print "batch number " + str(train_batches)
                 inputs, targets = batch
@@ -474,7 +473,7 @@ def getLSTM(params, filename):
                 train_batches += 1
 
             for batch in iterate_minibatches(X_train2, y_train2, params['BATCH_SIZE'],
-                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
+                                             params['SEQ_LENGTH'], shuffle=False):
                 # if train_batches % 50 == 0:
                 #     print "batch number " + str(train_batches)
                 inputs, targets = batch
@@ -487,7 +486,7 @@ def getLSTM(params, filename):
             val_batches = 0
 
             for batch in iterate_minibatches(X_val1, y_val1, params['BATCH_SIZE'],
-                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
+                                             params['SEQ_LENGTH'], shuffle=False):
                 inputs, targets = batch
                 err = validate(inputs, targets)
                 val_err += err
@@ -519,7 +518,7 @@ def getLSTM(params, filename):
             val_batches = 0
 
             for batch in iterate_minibatches(X_val2, y_val2, params['BATCH_SIZE'],
-                                             params['NUM_FEATURES'], params['SEQ_LENGTH'], shuffle=False):
+                                             params['SEQ_LENGTH'], shuffle=False):
                 inputs, targets = batch
                 err = validate(inputs, targets)
                 val_err += err
@@ -567,10 +566,10 @@ def rulEx(paragraphs):
     return set(possible_addresses)
 
 
-def iterate_minibatches(inputs, targets, batchsize, NUM_FEATURES, SEQ_LENGTH=None,
+def iterate_minibatches(inputs, targets, batchsize, SEQ_LENGTH=None,
                         CONV=None, shuffle=False):
     assert len(inputs) == len(targets)
-    num_feat = NUM_FEATURES
+    num_feat = len(inputs[0])
     # print inputs.shape
     if shuffle:
         indices = np.arange(len(inputs))
@@ -597,7 +596,7 @@ def iterate_minibatches(inputs, targets, batchsize, NUM_FEATURES, SEQ_LENGTH=Non
         y = np.zeros((batchsize * (batches), CONV))
 
         for i in range(len(inputs)):
-            X[i / CONV, 0, i % CONV, :] = inputs[i][:num_feat]
+            X[i / CONV, 0, i % CONV, :] = inputs[i]
             y[i / CONV, i % CONV] = targets[i]
 
         for i in range(batches):

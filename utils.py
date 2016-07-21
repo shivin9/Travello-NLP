@@ -18,7 +18,7 @@ def parsePage(url):
     opener.addheaders = [
         ('User-agent', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/50.0.2661.102 Chrome/50.0.2661.102 Safari/537.36')]
     response = opener.open(url)
-    page = response.read()
+    page = response.read()mode
     soup = BeautifulSoup(page, 'lxml')
 
     for elem in soup.findAll(['script', 'style']):
@@ -197,7 +197,7 @@ def getData(paras, NUM_FEATURES, BATCH_SIZE, SEQ_LENGTH=None):
 
         data = np.zeros((BATCH_SIZE * (batches), SEQ_LENGTH, len(data1[0])))
 
-        for i in range(len(data1) - SEQ_LENGTH):
+        for i in range(len1):
             data[i, :, :] = data1[i: i + SEQ_LENGTH]
 
         del(data1)
@@ -223,7 +223,7 @@ def getScores(pred, paras, params):
     return out
 
 
-def load_dataset(X, y, NUM_FEATURES, wndw=1):
+def load_dataset(X, y, NUM_FEATURES=None, wndw=1):
     '''
         wndw is the window_size for buffering the input with 0 vectors
     '''
@@ -256,16 +256,17 @@ def load_dataset(X, y, NUM_FEATURES, wndw=1):
     if wndw / 2 > 0:
         num_feat = len(X[0])
         Xbuffer = np.ones((wndw / 2, num_feat)) * eps
-        ybuffer = np.ones((wndw / 2,)) * eps
+        # ybuffer = np.ones((wndw / 2,)) * eps
         X_train = np.vstack([Xbuffer, X_train, Xbuffer])
         X_val = np.vstack([Xbuffer, X_val, Xbuffer])
 
         # append 0s at the front and the back of both training and testing
         # labels
-        y_train = np.append(ybuffer, y_train)
-        y_train = np.append(y_train, ybuffer)
+        # no need for appending targets
+        # y_train = np.append(ybuffer, y_train)
+        # y_train = np.append(y_train, ybuffer)
 
-        y_val = np.append(ybuffer, y_val)
-        y_val = np.append(y_val, ybuffer)
+        # y_val = np.append(ybuffer, y_val)
+        # y_val = np.append(y_val, ybuffer)
 
     return X_train, y_train, X_val, y_val

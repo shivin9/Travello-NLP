@@ -155,8 +155,8 @@ def lstm(input_var, params):
 def getCNN(params, filename=None):
 
     print "loading data..."
-    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEAT'])
-    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEAT'])
+    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEATURES'])
+    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEATURES'])
 
     input_var = T.tensor4('inputs')
     l_out = cnn(input_var, params)
@@ -281,11 +281,11 @@ def getCNN(params, filename=None):
 def getRNN(params, filename=None):
 
     print "loading data..."
-    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEAT'], params['SEQ_LENGTH'])
-    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEAT'], params['SEQ_LENGTH'])
+    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEATURES'], params['SEQ_LENGTH'])
+    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEATURES'], params['SEQ_LENGTH'])
 
     # the number of features may change if we expand the features using polynomial expansion
-    params['NUM_FEAT'] = len(X_train[0])
+    params['NUM_FEATURES'] = len(X_train1[0])
 
     input_var = T.ftensor3('input_var')
     l_out = rnn(input_var, params)
@@ -417,8 +417,8 @@ def getRNN(params, filename=None):
 def getLSTM(params, filename):
 
     print "loading data..."
-    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEAT'])
-    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEAT'])
+    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEATURES'])
+    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEATURES'])
 
     input_var = T.ftensor3('input_var')
     l_out = lstm(input_var, params)
@@ -568,7 +568,6 @@ def rulEx(paragraphs):
 
 def iterate_minibatches(inputs, targets, batchsize, SEQ_LENGTH=None,
                         CONV=None, shuffle=False):
-    assert len(inputs) == len(targets)
     num_feat = len(inputs[0])
     # print inputs.shape
     if shuffle:
@@ -582,7 +581,7 @@ def iterate_minibatches(inputs, targets, batchsize, SEQ_LENGTH=None,
         X = np.zeros((batchsize * (batches), SEQ_LENGTH, num_feat))
         y = np.zeros((batchsize * batches, ))
 
-        for i in range(len(inputs) - SEQ_LENGTH):
+        for i in range(len(inputs) - SEQ_LENGTH/2 - 2):
             X[i, :, :] = inputs[i: i + SEQ_LENGTH]
             # for SEQ_LENGTH number of records, append a target value
             y[i] = targets[i]

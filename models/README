@@ -1,3 +1,7 @@
 RNN with sequence length = 4 is poor
 LSTM is also working fine
 Old data is presently better than new data...?? ie. without increasing the weights of streets
+
+problem confirmed... it's all due to lack of training data
+
+nope... less training is not good... have to increase diversity of data

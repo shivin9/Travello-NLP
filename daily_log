@@ -89,3 +89,7 @@ Changed the weights of the streets... 1000 is too much
 18th July:- Conducted more tests with hieracchical approach and now more convinced that that the problem is lack of training data
 
 19th July:- 2 ideas... Increase the training data or loosen the features and classifier so that it doesn't learn very strongly. Will try them
+
+21st July:- Best model found on testing branch... problem is lack of diversity in training data... will try word2vec also soon
+
+23rd July:- trying to fix the lstm NN for categorical classification...

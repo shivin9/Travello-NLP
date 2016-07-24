@@ -780,7 +780,6 @@ def iterate_minibatches(inputs, targets, batchsize, SEQ_LENGTH=None,
         targets.shape = (batchsize, 1)
     '''
 
-    assert len(inputs) == len(targets)
     num_feat = len(inputs[0])
 
     # if RNN or LSTM being used

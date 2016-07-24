@@ -465,17 +465,11 @@ def load_dataset(X, y, NUM_FEATURES, wndw=1):
 
     if wndw / 2 > 0:
         num_feat = len(X[0])
+        # 0 buffers for training and validation data...
+        # not needed for labels though as buffering doesn't increase the
+        # number of data points... this a bug till now
         Xbuffer = np.ones((wndw / 2, num_feat)) * eps
-        ybuffer = np.ones((wndw / 2,)) * eps
         X_train = np.vstack([Xbuffer, X_train, Xbuffer])
         X_val = np.vstack([Xbuffer, X_val, Xbuffer])
-
-        # append 0s at the front and the back of both training and testing
-        # labels
-        y_train = np.append(ybuffer, y_train)
-        y_train = np.append(y_train, ybuffer)
-
-        y_val = np.append(ybuffer, y_val)
-        y_val = np.append(y_val, ybuffer)
 
     return X_train, y_train, X_val, y_val

@@ -137,17 +137,21 @@ def consolidateStuff(url, titles, addresses, images):
     # image belongs to and using string similarity algorithms we will assign
     # that placename to this image
 
-    choices = [str(image) for image in images]
+    choices = [str(image).decode('utf-8') for image in images]
 
-    for i in range(len(titles)):
-        # extractOne returns a tuple (imageName, similarity_score)
-        rightImage = process.extractOne(jsonoutput[i]['Place Name'],
-                                        choices)[0]
+    if len(choices) == 0:
+        jsonoutput[i]['Image URL'] = "http://herbookthoughts.reads-it.com/wp-content/uploads/2014/6/6a1143f571184db25f94613edd43b40af6d3a629221aba00d9efdcfef5efd84.jpg"
 
-        # we want the src attribute only
-        imgurls = re.findall('img .*src="(.*?)"', rightImage)
+    else:
+        for i in range(len(titles)):
+            # extractOne returns a tuple (imageName, similarity_score)
+            rightImage = process.extractOne(jsonoutput[i]['Place Name'],
+                                            choices)[0]
 
-        jsonoutput[i]['Image URL'] = imgurls[0]
+            # we want the src attribute only
+            imgurls = re.findall('img .*src="(.*?)"', rightImage)
+
+            jsonoutput[i]['Image URL'] = imgurls[0]
 
     # print jsonoutput
     return json.dumps(jsonoutput, indent=4)

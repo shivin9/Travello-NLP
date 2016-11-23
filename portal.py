@@ -127,7 +127,7 @@ def post_form():
     return str_to_return
 
 
-@app.route('/json-data/')
+@app.route('/json-data')
 def json_data():
     '''
     This method is similar to the previous one but note that is is hosted at
@@ -143,9 +143,10 @@ def json_data():
     try:
         addresses = getAddress(
         url, [(paramsold, rnnModelold), (params, rnnModel), (paramslstm, lstmmodel)])
-        print("addresses took {:.3f}s".format(time.time() - start_time))
+       	print("obtained addresses")
+	print("addresses took {:.3f}s".format(time.time() - start_time))
     except:
-        return "{error: Cant retrieve address}"
+        return "{error: Cant retrieve address - json_data}"
 
     t1 = time.time()
 

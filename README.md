@@ -24,6 +24,7 @@ It is used as follows:-
             addresses = getAddress(url, [(paramsold, rnnModelold)])
 
 4) Retrieve all the titles as follows:-
+            
             url = 'https://sf.eater.com/maps/10-top-spots-for-indian-in-san-francisco/gajalee'
             titles = getTitle(url, addresses)
 

@@ -38,7 +38,7 @@ It is used as follows:-
 
 It should look something like this:-
 
-`
+```
 {
     "1": {
         "Write-up": "This Mission spot has a coastal seafood twist, setting it far apart from other Indian in the area. Lookout for the fish malvani masala, thali and curry leaf calamari, and wash it all down with a rose lassi.",
@@ -60,4 +60,4 @@ It should look something like this:-
         ]
     }
 }
-`
+```

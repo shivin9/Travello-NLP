@@ -8,16 +8,16 @@ import re
 from utils import parsePage, getData, getScores
 from models import rulEx
 
-sys.path.insert(0, './database/')
+sys.path.insert(0, '/var/www/Travello-NLP/database/')
 st = TreebankWordTokenizer()
 
-with open('./database/hard_data/streets.json', 'r') as f:
+with open('/var/www/Travello-NLP/database/hard_data/streets.json', 'r') as f:
     streets = json.load(f)
-with open('./database/hard_data/states.json', 'r') as f:
+with open('/var/www/Travello-NLP/database/hard_data/states.json', 'r') as f:
     states = json.load(f)
-with open('./database/hard_data/cities.json', 'r') as f:
+with open('/var/www/Travello-NLP/database/hard_data/cities.json', 'r') as f:
     cities = json.load(f)
-with open('./database/hard_data/countries.json', 'r') as f:
+with open('/var/www/Travello-NLP/database/hard_data/countries.json', 'r') as f:
     countries = json.load(f)
 
 
@@ -39,6 +39,7 @@ def getAddress(url, predictors):
     '''
 
     soup, paras, paradict = parsePage(url)
+    print "here"
     addresses = []
 
     if 'tripadvisor' in url:
@@ -57,7 +58,7 @@ def getAddress(url, predictors):
             # take the intersection of the results extracted by the classifiers...
             # success depends heavily on the ability of the classifiers to find all the addresses
             results = results.intersection(addrs)
-            print getScores(pred, paras, params)
+            #print getScores(pred, paras, params)
 
         # the final address extractor is the hard coded rule-based function which works when
         # there are telephone numbers in the address

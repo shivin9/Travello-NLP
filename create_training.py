@@ -9,28 +9,28 @@ st = TreebankWordTokenizer()
 # this is the hard data which is used to create the feature vectors for a paragraph
 
 # most-used street names
-with open('./database/hard_data/streets.json', 'r') as f:
+with open('/var/www/Travello-NLP/database/hard_data/streets.json', 'r') as f:
     streets = json.load(f)
 
 # names of all states in all countries
-with open('./database/hard_data/states.json', 'r') as f:
+with open('/var/www/Travello-NLP/database/hard_data/states.json', 'r') as f:
     states = json.load(f)
 
 # names of all cities of the world
-with open('./database/hard_data/cities.json', 'r') as f:
+with open('/var/www/Travello-NLP/database/hard_data/cities.json', 'r') as f:
     cities = json.load(f)
 
 # names of all the countries of the world
-with open('./database/hard_data/countries.json', 'r') as f:
+with open('/var/www/Travello-NLP/database/hard_data/countries.json', 'r') as f:
     countries = json.load(f)
 
 # to simulate a real blog, we place non-address paragraphs taken from real
 # blogs and append it below and above an address to simulate a real blog
-with open('./database/hard_data/garbage', 'r') as f:
+with open('/var/www/Travello-NLP/database/hard_data/garbage', 'r') as f:
     garbage = f.read()
 
 # a sample list of 1000 restaurants
-with open('./database/hard_data/cafes', 'r') as f:
+with open('/var/www/Travello-NLP/database/hard_data/cafes', 'r') as f:
     cafes = f.read()
 
 # regular expression for finding phone numbers
@@ -82,7 +82,7 @@ def generate_data():
     '''
 
     labels1 = []
-    with open('./database/hard_data/walmart-full.json') as addrs:
+    with open('/var/www/Travello-NLP/database/hard_data/walmart-full.json') as addrs:
         addrs = json.load(addrs)
 
     addresses_train = []
@@ -134,16 +134,16 @@ def generate_data():
             print i
         data_vec += getdet(addresses_train[i])
 
-    with open("./database/features/train1", "w") as f:
+    with open("/var/www/Travello-NLP/database/features/train1", "w") as f:
         print >> f, addresses_train
 
-    with open("./database/features/labels1.py", "w") as f1:
+    with open("/var/www/Travello-NLP/database/features/labels1.py", "w") as f1:
         print >> f1, labels1
 
-    with open("./database/features/lenghts1.py", "w") as f1:
+    with open("/var/www/Travello-NLP/database/features/lenghts1.py", "w") as f1:
         print >> f1, lengths1
 
-    with open("./database/features/datavec1.py", "w") as f2:
+    with open("/var/www/Travello-NLP/database/features/datavec1.py", "w") as f2:
         print >> f2, data_vec
 
 
@@ -168,7 +168,7 @@ def oneliners():
     Used addresses of 6000 restaurants in New-York
     '''
 
-    with open('./database/hard_data/us_rest1.json') as rests:
+    with open('/var/www/Travello-NLP/database/hard_data/us_rest1.json') as rests:
         rests = json.load(rests)
 
     print "generating one line addresses..."
@@ -238,16 +238,16 @@ def oneliners():
             print i
         data_vec += getdet(one_line_addrs[i])
 
-    with open("./database/features/train2", "w") as f:
+    with open("/var/www/Travello-NLP/database/features/train2", "w") as f:
         print >> f, one_line_addrs
 
-    with open("./database/features/labels2.py", "w") as f1:
+    with open("/var/www/Travello-NLP/database/features/labels2.py", "w") as f1:
         print >> f1, labels2
 
-    with open("./database/features/lengths2.py", "w") as f1:
+    with open("/var/www/Travello-NLP/database/features/lengths2.py", "w") as f1:
         print >> f1, lengths2
 
-    with open("./database/features/datavec2.py", "w") as f2:
+    with open("/var/www/Travello-NLP/database/features/datavec2.py", "w") as f2:
         print >> f2, data_vec
 
 

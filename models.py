@@ -8,8 +8,8 @@ import lasagne
 import theano
 import sys
 
-sys.path.insert(0, './database/features')
-sys.path.insert(0, './database/')
+sys.path.insert(0, '/var/www/Travello-NLP/database/features')
+sys.path.insert(0, '/var/www/Travello-NLP/database/')
 st = TreebankWordTokenizer()
 
 from datavec1 import X1
@@ -266,7 +266,7 @@ def getCNN(params, filename=None):
 
     if filename:
         print "Loading a previously saved model..."
-        all_param_values = np.load("./models/" + filename + '.npy')
+        all_param_values = np.load("/var/www/Travello-NLP/models/" + filename + '.npy')
 
         for i in range(len(all_param_values)):
             all_param_values[i] = all_param_values[i].astype('float32')
@@ -365,7 +365,7 @@ def getCNN(params, filename=None):
 
         print "saving the parameters..."
         all_param_values = [p.get_value() for p in all_params]
-        np.save("./models/" + str(params), all_param_values)
+        np.save("/var/www/Travello-NLP/models/" + str(params), all_param_values)
 
     return pred
 
@@ -418,7 +418,7 @@ def getRNN(params, filename=None):
 
     if filename:
         print "Loading a previously saved " + params['NAME']
-        all_param_values = np.load("./models/" + filename + '.npy')
+        all_param_values = np.load("/var/www/Travello-NLP/models/" + filename + '.npy')
 
         for i in range(len(all_param_values)):
             all_param_values[i] = all_param_values[i].astype('float32')
@@ -516,7 +516,7 @@ def getRNN(params, filename=None):
 
         print "saving the parameters..."
         all_param_values = [p.get_value() for p in all_params]
-        np.save("./models/" + str(params), all_param_values)
+        np.save("/var/www/Travello-NLP/models/" + str(params), all_param_values)
 
     return pred
 
@@ -567,7 +567,7 @@ def getLSTM(params, filename):
 
     if filename:
         print "Loading a previously saved " + params['NAME']
-        all_param_values = np.load("./models/" + filename + '.npy')
+        all_param_values = np.load("/var/www/Travello-NLP/models/" + filename + '.npy')
 
         for i in range(len(all_param_values)):
             all_param_values[i] = all_param_values[i].astype('float32')
@@ -666,7 +666,7 @@ def getLSTM(params, filename):
 
         print "saving the parameters..."
         all_param_values = [p.get_value() for p in all_params]
-        np.save("./models/" + str(params), all_param_values)
+        np.save("/var/www/Travello-NLP/models/" + str(params), all_param_values)
 
     return pred
 
@@ -718,7 +718,7 @@ def rulEx(paragraphs):
             poss = []
             # note that with appending of this paragraph, we have tackled the case of
             # one-line addresses which have phone numbers at the end
-            poss.append((paragraphs[idx], idx))
+            #poss.append((paragraphs[idx], idx))
             temp = idx - 1
 
             # backtrack from the phone number while the length of the paragraph is < 9
@@ -732,7 +732,7 @@ def rulEx(paragraphs):
             # address
             if len(poss) <= 15:
                 possible_addresses += poss
-
+		print "test", poss
     return set(possible_addresses)
 
 

@@ -58,3 +58,28 @@ It should look something like this:-
         ]
     }
 }
+
+# So, How does it actually work?
+The web is filled with reviews of travel spots, dining places, historical sites etc. in form of structured, professional resources like **[TripAdvisor](https://www.tripadvisor.in/)** or **[MakeMyTrip](https://www.makemytrip.com/)** and unstructured resources (mostly blogs) like **[LadyIronChef](http://www.ladyironchef.com/)** or **[Boston Eater](https://boston.eater.com/)**. Making an application which can mine relevant, structured information from all these varieties of places is surely a challenge but in this project we have managed to acheive a decent performance in terms of precision, recall and versitality.
+
+## Mining data from structured resources.
+This was pretty easy to say the least. One has to just mine the html page and look for specific, named tags which store the required information. eg. on TripAdvisor all the headings are in the `<span>` tag while addresses are nicely encapsulated in the `<street-address>`, `<locality>` and the `<country-name>` tags.
+
+## Mining data from blogs
+This was the really challenging part of the project which took the major time of my internship. There are two major problems which prohibit us from employing a generic solution by seeing the html structure of the webpage:-
+
+* People use different blogging services to create their blogs which makes sure that every blog is a different website altogether with different ways of storing data usually blog posts
+
+* Every blog writer has a different style of writing and arranging their page which makes the task of our information scraper even more difficult. Also, unlike professional websites like **TripAdvisor**, blogs are usually simple and everything is written in form of plain text
+
+These factors motivated me give up on html-page mining approach and I turned to machine learning for help. The only hope of success of such a solution lied in the fact that even though the html-pages of blogs are unique, every blog post follows a loosely similar structure ie. every post has a **Main Title** eg. 10 best restaurants in Singapore followed by details of 10 restaurants which are themselves structured having a **Title**, **Text body**, **Photo** and **Address**.
+
+So I tried to capture any one of these parameters and then mine the other three as they lie nearby only. Title names can be 
+
+# Where did get the training data from?
+
+# Recursive Neural what!?
+
+# Features
+
+# Putting it all together

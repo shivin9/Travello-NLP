@@ -58,7 +58,6 @@ try:
 except:
     print "couldn't create the model... enter a valid filename"
 
-
 try:
     # print paramslstm
     lstmmodel = getModel(paramslstm, "lstmodel-old")
@@ -132,7 +131,7 @@ def json_data():
     '''
     This method is similar to the previous one but note that is is hosted at
     /json-data/ for the travello application to query it. No webpage is rendered
-    like the previous smethod
+    like the previous method
     '''
 
     url = request.args.get('url', 2)
@@ -177,3 +176,10 @@ def json_data():
 
 if __name__ == '__main__':
     app.run()
+
+    # uncomment these lines to debug your error
+    # url = "http://www.ladyironchef.com/2017/10/birdfolks-singapore/"
+    # addresses = getAddress(url, [(paramsold, rnnModelold), (params, rnnModel), (paramslstm, lstmmodel)])
+    # titles = getTitle(url, addresses)
+    # images = getImg(url)
+    # str_to_return = consolidateStuff(url, titles, addresses, images)

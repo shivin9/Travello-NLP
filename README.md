@@ -96,8 +96,20 @@ This turned out to be quite easy as I just had to select random sentences from [
 Thus I trained my RNN on around 11,000 blog posts by **feeding 5 lines** at a time (2 lines from past, 1 from present and 2 from future) so that the classifier can learn how to exactly figure out an address amidst pieces of text.
 
 # Features
-The feature set for a sentence is simple, there are 8 feature defined here
+The feature set for a sentence is simple, there are 9 feature defined [here](https://github.com/shivin9/Travello-NLP/blob/master/create_training.py#L277)
 
 
 # Putting it all together
+After we parse a page and get the location of addresses (in form of line numbers) we use this information to extract the name of place as well. Knowing that above the address lies a paragraph or two of **text description**, maybe a **photo** and then the **title** we capture this information using a few simple heuristic arguments on the locality of addresses, titles etc.
+
+For implementation details you can see the code and ping me in case of doubts!
+
+# Using Travello-NLP
+
+1) Make sure that you have all the libraries given in the requirements
+2) Enable GPU for theano for better performance
+3) Pre-trained models are stored in the `./models/` folder. You can train your own by chaning the parameter in the `portal.py` file.
+4) To debug the application you can either execute each function independently in iPython or uncomment [these](https://github.com/shivin9/Travello-NLP/blob/master/portal.py#L181-L185) lines.
+5) Run the application using `python portal.py`
+
 =======

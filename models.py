@@ -8,8 +8,9 @@ import lasagne
 import theano
 import sys
 
-sys.path.insert(0, '/var/www/Travello-NLP/database/features')
-sys.path.insert(0, '/var/www/Travello-NLP/database/')
+sys.path.insert(0, './database/features')
+sys.path.insert(0, './database/')
+sys.path.insert(0, './models/')
 st = TreebankWordTokenizer()
 
 from datavec1 import X1
@@ -248,8 +249,6 @@ def getCNN(params, filename=None):
     ----------
     https://github.com/Lasagne/Lasagne/blob/master/examples/mnist.py    '''
 
-    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEATURES'])
-    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEATURES'])
     input_var = T.tensor4('inputs')
     l_out = cnn(input_var, params)
 
@@ -266,7 +265,7 @@ def getCNN(params, filename=None):
 
     if filename:
         print "Loading a previously saved model..."
-        all_param_values = np.load("/var/www/Travello-NLP/models/" + filename + '.npy')
+        all_param_values = np.load("./models/" + filename + '.npy')
 
         for i in range(len(all_param_values)):
             all_param_values[i] = all_param_values[i].astype('float32')
@@ -276,6 +275,11 @@ def getCNN(params, filename=None):
             p.set_value(v)
 
     else:
+        print('loading data for ' + params['NAME'])
+
+        X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEATURES'])
+        X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEATURES'])
+
         print('compiling the ' + params['NAME'])
 
         train = theano.function([input_var, target_values],
@@ -365,7 +369,7 @@ def getCNN(params, filename=None):
 
         print "saving the parameters..."
         all_param_values = [p.get_value() for p in all_params]
-        np.save("/var/www/Travello-NLP/models/" + str(params), all_param_values)
+        np.save("./models/" + str(params), all_param_values)
 
     return pred
 
@@ -396,11 +400,6 @@ def getRNN(params, filename=None):
         removed the mask used in that neural network as in our application we have a
         fixed sequence length
     '''
-    print "loading data..."
-
-    # the simple rnn works with window size = 1
-    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEATURES'], params['SEQ_LENGTH'])
-    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEATURES'], params['SEQ_LENGTH'])
 
     input_var = T.ftensor3('input_var')
     l_out = rnn(input_var, params)
@@ -418,7 +417,7 @@ def getRNN(params, filename=None):
 
     if filename:
         print "Loading a previously saved " + params['NAME']
-        all_param_values = np.load("/var/www/Travello-NLP/models/" + filename + '.npy')
+        all_param_values = np.load("./models/" + filename + '.npy')
 
         for i in range(len(all_param_values)):
             all_param_values[i] = all_param_values[i].astype('float32')
@@ -428,6 +427,12 @@ def getRNN(params, filename=None):
             p.set_value(v)
 
     else:
+        print('loading data for ' + params['NAME'])
+
+        # the simple rnn works with window size = 1
+        X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEATURES'], params['SEQ_LENGTH'])
+        X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEATURES'], params['SEQ_LENGTH'])
+
         print('compiling the ' + params['NAME'])
 
         train = theano.function([input_var, target_values],
@@ -516,7 +521,7 @@ def getRNN(params, filename=None):
 
         print "saving the parameters..."
         all_param_values = [p.get_value() for p in all_params]
-        np.save("/var/www/Travello-NLP/models/" + str(params), all_param_values)
+        np.save("./models/" + str(params), all_param_values)
 
     return pred
 
@@ -546,10 +551,6 @@ def getLSTM(params, filename):
     http://colinraffel.com/talks/hammer2015recurrent.pdf
     '''
 
-    print "loading data..."
-    X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEATURES'], params['SEQ_LENGTH'])
-    X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEATURES'], params['SEQ_LENGTH'])
-
     input_var = T.ftensor3('input_var')
     l_out = lstm(input_var, params)
 
@@ -567,7 +568,7 @@ def getLSTM(params, filename):
 
     if filename:
         print "Loading a previously saved " + params['NAME']
-        all_param_values = np.load("/var/www/Travello-NLP/models/" + filename + '.npy')
+        all_param_values = np.load("./models/" + filename + '.npy')
 
         for i in range(len(all_param_values)):
             all_param_values[i] = all_param_values[i].astype('float32')
@@ -577,6 +578,9 @@ def getLSTM(params, filename):
             p.set_value(v)
 
     else:
+        print('loading data for ' + params['NAME'])
+        X_train1, y_train1, X_val1, y_val1 = load_dataset(X1, y1, params['NUM_FEATURES'], params['SEQ_LENGTH'])
+        X_train2, y_train2, X_val2, y_val2 = load_dataset(X2, y2, params['NUM_FEATURES'], params['SEQ_LENGTH'])
 
         print('compiling the ' + params['NAME'])
 
@@ -666,7 +670,7 @@ def getLSTM(params, filename):
 
         print "saving the parameters..."
         all_param_values = [p.get_value() for p in all_params]
-        np.save("/var/www/Travello-NLP/models/" + str(params), all_param_values)
+        np.save("./models/" + str(params), all_param_values)
 
     return pred
 
@@ -728,11 +732,10 @@ def rulEx(paragraphs):
                 poss.append((paragraphs[temp].encode("ascii"), temp))
                 temp -= 1
 
-            # address cant be that long ie. there can't be a 15 line long
-            # address
+            # address cant be that long ie. there can't be a 15 line long address
             if len(poss) <= 15:
                 possible_addresses += poss
-		print "test", poss
+		# print "test", poss
     return set(possible_addresses)
 
 

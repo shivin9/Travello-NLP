@@ -8,16 +8,16 @@ import re
 from utils import parsePage, getData, getScores
 from models import rulEx
 
-sys.path.insert(0, '/var/www/Travello-NLP/database/')
+sys.path.insert(0, './database/')
 st = TreebankWordTokenizer()
 
-with open('/var/www/Travello-NLP/database/hard_data/streets.json', 'r') as f:
+with open('./database/hard_data/streets.json', 'r') as f:
     streets = json.load(f)
-with open('/var/www/Travello-NLP/database/hard_data/states.json', 'r') as f:
+with open('./database/hard_data/states.json', 'r') as f:
     states = json.load(f)
-with open('/var/www/Travello-NLP/database/hard_data/cities.json', 'r') as f:
+with open('./database/hard_data/cities.json', 'r') as f:
     cities = json.load(f)
-with open('/var/www/Travello-NLP/database/hard_data/countries.json', 'r') as f:
+with open('./database/hard_data/countries.json', 'r') as f:
     countries = json.load(f)
 
 
@@ -39,7 +39,7 @@ def getAddress(url, predictors):
     '''
 
     soup, paras, paradict = parsePage(url)
-    print "here"
+    # print soup
     addresses = []
 
     if 'tripadvisor' in url:
@@ -210,7 +210,7 @@ def new_address(text):
     regexp = re.compile(
         r'\+[0-9][0-9]*|\([0-9]{3}\)|[0-9]{4} [0-9]{4}|([0-9]{3,4}[- ]){2}[0-9]{3,4}|[0-9]{10}')
     # print paragraphs
-    print lens
+    # print lens
     possible_addresses = []
     idx = 0
     while idx < len(paragraphs):
@@ -219,7 +219,7 @@ def new_address(text):
             poss = []
             poss.append(paragraphs[idx])
             temp = idx - 1
-            print paragraphs[idx]
+            # print paragraphs[idx]
             # go back till we are seeing an address
             while isAddr(paragraphs[temp]) and lens[temp] < 10:
                 poss.append(paragraphs[temp])

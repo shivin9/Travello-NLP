@@ -102,7 +102,7 @@ def consolidateStuff(url, titles, addresses, images):
     lens = [len(p) for p in paragraphs]
     jsonoutput = {}
     posspara = LongParas(lens)
-    print type(posspara)
+    # print type(posspara)
     titles = [paradict[t]  for t in titles]
 
     # special consilidation for TripAdvisor

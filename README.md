@@ -83,13 +83,21 @@ So I tried to capture any one of these parameters and then mine the other three 
 # Identifying addresses on a page
 Even though addresses show some structure within themselves eg. having **house name**, **street name**, **locality**, **city**, **state** and **country** followed by a **phone number** sometimes, but still not every piece of information is present all the time. The only thing that we can depend on is that the order of features remains the same ie. country name never follows the street name. The relative sequencing of the features remains the same.
 
-This motivated me to use a Recursive Neural Network as they can capture the relative order of 
+This motivated me to use a Recurrent Neural Network as they can have a dynamic temporal memory which can process arbitrary sequences of inputs.
 
 # Where did the training data come from?
+Getting the training data was another big hurdle as there is no repository of all the addresses or place names in the world. Neither we have a collection of annotated web pages where text and addresses are marked.
+(If only we had a mechanism to mark addresses in a piece of text then we could get the training data... but then ofcourse we wouldn't need this project in the first place!)
 
-# Recursive Neural what!?
+So finally it struck me that if I find can't a repository of blog posts with text and addressed marked then I can simply make one!
+
+This turned out to be quite easy as I just had to select random sentences from [here](https://github.com/shivin9/Travello-NLP/blob/master/database/hard_data/garbage) and sprinkle them with partially structures addresses (how they would occur in real life blog posts) chosen from [here](https://github.com/shivin9/Travello-NLP/tree/master/database/hard_data).
+
+Thus I trained my RNN on around 11,000 blog posts by **feeding 5 lines** at a time (2 lines from past, 1 from present and 2 from future) so that the classifier can learn how to exactly figure out an address amidst pieces of text.
 
 # Features
+The feature set for a sentence is simple, there are 8 feature defined here
+
 
 # Putting it all together
 =======
